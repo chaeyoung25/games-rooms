@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bingo Rooms - Lobby</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <div class="brand">
+          <h1>BINGO ROOMS</h1>
+          <div class="tag">한 방 최대 8명, 보드는 5x5~10x10</div>
+        </div>
+        <div class="row">
+          <span class="pill">접속: <b id="me"></b></span>
+          <button id="logout" class="ghost">로그아웃</button>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="inner">
+            <h2>방 만들기</h2>
+            <div style="margin-bottom: 12px">
+              <label for="size">빙고 크기</label>
+              <select id="size">
+                <option value="5">5 x 5</option>
+                <option value="6">6 x 6</option>
+                <option value="7">7 x 7</option>
+                <option value="8">8 x 8</option>
+                <option value="9">9 x 9</option>
+                <option value="10">10 x 10</option>
+              </select>
+            </div>
+            <div class="row">
+              <button id="create" class="primary">방 만들기</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="inner">
+            <h2>방 참가</h2>
+            <div style="margin-bottom: 12px">
+              <label for="code">방 코드</label>
+              <input id="code" placeholder="예: A7K9Q2" />
+            </div>
+            <div class="row">
+              <button id="join" class="good">참가하기</button>
+            </div>
+            <div id="msg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/lobby.js"></script>
+    <script>
+      initLobbyPage();
+    </script>
+  </body>
+</html>
+

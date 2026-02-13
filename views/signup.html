@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bingo Rooms - Signup</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <div class="brand">
+          <h1>BINGO ROOMS</h1>
+          <div class="tag">회원가입 후 바로 로그인할 수 있어요</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="inner">
+          <h2>회원가입</h2>
+          <form id="signup-form">
+            <div style="margin-bottom: 12px">
+              <label for="username">아이디 (2~20자)</label>
+              <input id="username" autocomplete="username" required />
+            </div>
+            <div style="margin-bottom: 12px">
+              <label for="password">비밀번호 (4자 이상)</label>
+              <input id="password" type="password" autocomplete="new-password" required />
+            </div>
+            <div class="row">
+              <button class="good" type="submit">가입하기</button>
+              <a class="pill" href="/login">로그인</a>
+            </div>
+            <div id="msg"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/auth.js"></script>
+    <script>
+      initSignupPage();
+    </script>
+  </body>
+</html>
+

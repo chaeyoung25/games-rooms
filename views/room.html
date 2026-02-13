@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bingo Rooms - Room</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="topbar">
+        <div class="brand">
+          <h1>BINGO ROOMS</h1>
+          <div class="tag">방 코드로 함께 플레이</div>
+        </div>
+        <div class="row">
+          <span class="pill">접속: <b id="me"></b></span>
+          <button id="leave" class="ghost">나가기</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom: 14px">
+        <div class="inner">
+          <div class="room-head">
+            <div class="row">
+              <span class="pill">방 코드 <span class="room-code" id="code"></span></span>
+              <span class="pill">크기 <b id="size"></b></span>
+              <span class="pill">목표 <b id="targetLines"></b>줄</span>
+              <span class="pill">상태 <b id="status"></b></span>
+              <span class="pill">내 라인 <b id="myLines">0</b></span>
+            </div>
+            <div class="row" id="hostControls" style="display: none">
+              <button id="start" class="good">게임 시작</button>
+              <button id="draw" class="primary">번호 뽑기</button>
+            </div>
+          </div>
+          <div class="row" style="margin-top: 12px">
+            <div class="pill">최근 번호</div>
+            <div class="big-number" id="lastNumber">-</div>
+            <div id="net"></div>
+          </div>
+          <div id="banner" style="margin-top: 12px"></div>
+          <div id="error" class="error" style="margin-top: 10px"></div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="inner">
+            <h2>내 빙고판</h2>
+            <div id="board" class="board"></div>
+            <div class="muted" style="margin-top: 10px">
+              번호는 방장이 랜덤으로 뽑습니다. 뽑힌 번호는 자동으로 표시됩니다.
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="inner">
+            <h2>참가자</h2>
+            <div class="muted">최대 8명</div>
+            <div id="players" class="players"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/room.js"></script>
+    <script>
+      initRoomPage();
+    </script>
+  </body>
+</html>

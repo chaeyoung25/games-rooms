@@ -1,0 +1,790 @@
+const http = require("node:http");
+const fs = require("node:fs");
+const fsp = require("node:fs/promises");
+const path = require("node:path");
+const crypto = require("node:crypto");
+
+const PORT = Number(process.env.PORT || 3000);
+const HOST = process.env.HOST || "0.0.0.0";
+const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret-change-me";
+
+const ROOT_DIR = __dirname;
+const PUBLIC_DIR = path.join(ROOT_DIR, "public");
+const VIEWS_DIR = path.join(ROOT_DIR, "views");
+const DATA_DIR = path.join(ROOT_DIR, "data");
+const USERS_FILE = path.join(DATA_DIR, "users.json");
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function safeJsonParse(text) {
+  try {
+    return { ok: true, value: JSON.parse(text) };
+  } catch {
+    return { ok: false, value: null };
+  }
+}
+
+function sendJson(res, statusCode, obj) {
+  const body = JSON.stringify(obj);
+  res.writeHead(statusCode, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Content-Length": Buffer.byteLength(body),
+    "Cache-Control": "no-store",
+  });
+  res.end(body);
+}
+
+function redirect(res, location, statusCode = 302) {
+  res.writeHead(statusCode, { Location: location, "Cache-Control": "no-store" });
+  res.end();
+}
+
+function contentTypeForPath(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  switch (ext) {
+    case ".css":
+      return "text/css; charset=utf-8";
+    case ".js":
+      return "text/javascript; charset=utf-8";
+    case ".html":
+      return "text/html; charset=utf-8";
+    case ".svg":
+      return "image/svg+xml";
+    case ".png":
+      return "image/png";
+    case ".jpg":
+    case ".jpeg":
+      return "image/jpeg";
+    case ".ico":
+      return "image/x-icon";
+    default:
+      return "application/octet-stream";
+  }
+}
+
+async function sendFile(res, filePath) {
+  try {
+    const st = await fsp.stat(filePath);
+    if (!st.isFile()) {
+      sendJson(res, 404, { ok: false, error: "not_found" });
+      return;
+    }
+    res.writeHead(200, {
+      "Content-Type": contentTypeForPath(filePath),
+      "Content-Length": st.size,
+      "Cache-Control": "no-store",
+    });
+    fs.createReadStream(filePath).pipe(res);
+  } catch {
+    sendJson(res, 404, { ok: false, error: "not_found" });
+  }
+}
+
+function parseCookies(req) {
+  const header = req.headers.cookie;
+  const out = {};
+  if (!header) return out;
+  for (const part of header.split(";")) {
+    const [k, ...rest] = part.trim().split("=");
+    if (!k) continue;
+    out[k] = decodeURIComponent(rest.join("="));
+  }
+  return out;
+}
+
+function base64UrlEncode(buf) {
+  return Buffer.from(buf)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
+}
+
+function base64UrlDecode(str) {
+  const input = String(str || "").replace(/-/g, "+").replace(/_/g, "/");
+  const padLen = (4 - (input.length % 4)) % 4;
+  const padded = input + "=".repeat(padLen);
+  return Buffer.from(padded, "base64");
+}
+
+function hmacBase64Url(input) {
+  return base64UrlEncode(crypto.createHmac("sha256", SESSION_SECRET).update(input).digest());
+}
+
+function makeSessionCookieValue(sid) {
+  return `${sid}.${hmacBase64Url(sid)}`;
+}
+
+function verifySessionCookieValue(value) {
+  if (!value) return null;
+  const idx = value.lastIndexOf(".");
+  if (idx <= 0) return null;
+  const sid = value.slice(0, idx);
+  const sig = value.slice(idx + 1);
+  const expected = hmacBase64Url(sid);
+  try {
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length) return null;
+    if (!crypto.timingSafeEqual(a, b)) return null;
+    return sid;
+  } catch {
+    return null;
+  }
+}
+
+const sessions = new Map(); // sid -> { userId, username, createdAt, lastSeenAt }
+const SESSION_COOKIE = "sid";
+
+function getSession(req) {
+  const cookies = parseCookies(req);
+  const raw = cookies[SESSION_COOKIE];
+  const sid = verifySessionCookieValue(raw);
+  if (!sid) return null;
+  const s = sessions.get(sid);
+  if (!s) return null;
+  s.lastSeenAt = Date.now();
+  return s;
+}
+
+function setSession(res, sessionData) {
+  const sid = base64UrlEncode(crypto.randomBytes(18));
+  sessions.set(sid, {
+    ...sessionData,
+    createdAt: Date.now(),
+    lastSeenAt: Date.now(),
+  });
+
+  const cookie = `${SESSION_COOKIE}=${encodeURIComponent(makeSessionCookieValue(sid))}; HttpOnly; Path=/; SameSite=Lax`;
+  res.setHeader("Set-Cookie", cookie);
+}
+
+function clearSession(req, res) {
+  const cookies = parseCookies(req);
+  const raw = cookies[SESSION_COOKIE];
+  const sid = verifySessionCookieValue(raw);
+  if (sid) sessions.delete(sid);
+  res.setHeader(
+    "Set-Cookie",
+    `${SESSION_COOKIE}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`
+  );
+}
+
+async function readJsonBody(req, { maxBytes = 1024 * 32 } = {}) {
+  return new Promise((resolve) => {
+    const chunks = [];
+    let size = 0;
+    req.on("data", (c) => {
+      size += c.length;
+      if (size > maxBytes) {
+        resolve({ ok: false, error: "body_too_large", value: null });
+        req.destroy();
+        return;
+      }
+      chunks.push(c);
+    });
+    req.on("end", () => {
+      const raw = Buffer.concat(chunks).toString("utf8");
+      const parsed = safeJsonParse(raw || "{}");
+      if (!parsed.ok) resolve({ ok: false, error: "invalid_json", value: null });
+      else resolve({ ok: true, error: null, value: parsed.value });
+    });
+  });
+}
+
+async function ensureData() {
+  await fsp.mkdir(DATA_DIR, { recursive: true });
+  try {
+    await fsp.access(USERS_FILE, fs.constants.F_OK);
+  } catch {
+    await fsp.writeFile(USERS_FILE, JSON.stringify({ nextId: 1, users: [] }, null, 2), "utf8");
+  }
+}
+
+let userDb = { nextId: 1, users: [] };
+let userDbWriteInFlight = Promise.resolve();
+
+async function loadUsers() {
+  await ensureData();
+  const raw = await fsp.readFile(USERS_FILE, "utf8");
+  const parsed = safeJsonParse(raw);
+  if (parsed.ok && parsed.value && typeof parsed.value === "object") {
+    userDb = {
+      nextId: Number(parsed.value.nextId || 1),
+      users: Array.isArray(parsed.value.users) ? parsed.value.users : [],
+    };
+  }
+}
+
+function queueUserDbWrite() {
+  userDbWriteInFlight = userDbWriteInFlight.then(async () => {
+    const tmp = `${USERS_FILE}.tmp`;
+    await fsp.writeFile(tmp, JSON.stringify(userDb, null, 2), "utf8");
+    await fsp.rename(tmp, USERS_FILE);
+  });
+  return userDbWriteInFlight;
+}
+
+function normalizeUsername(name) {
+  return String(name || "").trim();
+}
+
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16);
+  const key = crypto.scryptSync(password, salt, 32);
+  return `scrypt$${base64UrlEncode(salt)}$${base64UrlEncode(key)}`;
+}
+
+function verifyPassword(password, stored) {
+  const parts = String(stored || "").split("$");
+  if (parts.length !== 3) return false;
+  if (parts[0] !== "scrypt") return false;
+  const salt = base64UrlDecode(parts[1]);
+  const expected = base64UrlDecode(parts[2]);
+  const actual = crypto.scryptSync(String(password || ""), salt, expected.length);
+  if (actual.length !== expected.length) return false;
+  return crypto.timingSafeEqual(actual, expected);
+}
+
+function pickRoomCode() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
+  let code = "";
+  for (let i = 0; i < 6; i++) code += alphabet[crypto.randomInt(0, alphabet.length)];
+  return code;
+}
+
+function makeShuffledNumbers(n) {
+  const arr = Array.from({ length: n }, (_, i) => i + 1);
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(0, i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function generateBoard(size) {
+  const nums = makeShuffledNumbers(size * size);
+  const board = [];
+  for (let r = 0; r < size; r++) board.push(nums.slice(r * size, (r + 1) * size));
+  return board;
+}
+
+function countCompleteLines(board, calledSet) {
+  const size = board.length;
+  let lines = 0;
+
+  // rows
+  for (let r = 0; r < size; r++) {
+    let ok = true;
+    for (let c = 0; c < size; c++) {
+      if (!calledSet.has(board[r][c])) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) lines++;
+  }
+
+  // cols
+  for (let c = 0; c < size; c++) {
+    let ok = true;
+    for (let r = 0; r < size; r++) {
+      if (!calledSet.has(board[r][c])) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) lines++;
+  }
+
+  // diagonals
+  {
+    let ok = true;
+    for (let i = 0; i < size; i++) {
+      if (!calledSet.has(board[i][i])) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) lines++;
+  }
+  {
+    let ok = true;
+    for (let i = 0; i < size; i++) {
+      if (!calledSet.has(board[i][size - 1 - i])) {
+        ok = false;
+        break;
+      }
+    }
+    if (ok) lines++;
+  }
+
+  return lines;
+}
+
+const rooms = new Map(); // code -> room
+
+function roomPublicState(room) {
+  return {
+    code: room.code,
+    size: room.size,
+    targetLines: room.targetLines,
+    status: room.status,
+    hostUserId: room.hostUserId,
+    createdAt: room.createdAt,
+    players: Array.from(room.players.values()).map((p) => ({
+      userId: p.userId,
+      username: p.username,
+      online: Boolean(p.online),
+      joinedAt: p.joinedAt,
+    })),
+    calledNumbers: Array.from(room.calledNumbers),
+    lastNumber: room.lastNumber ?? null,
+    winners: room.winners,
+  };
+}
+
+function sseWrite(res, event, data) {
+  res.write(`event: ${event}\n`);
+  res.write(`data: ${JSON.stringify(data)}\n\n`);
+}
+
+function broadcastRoom(room, event, data) {
+  for (const sub of room.subscribers) {
+    try {
+      sseWrite(sub.res, event, data);
+    } catch {
+      // ignore broken pipes
+    }
+  }
+}
+
+function pruneRoomIfEmpty(room) {
+  if (room.players.size > 0) return;
+  try {
+    for (const sub of room.subscribers) sub.res.end();
+  } catch {
+    // ignore
+  }
+  rooms.delete(room.code);
+}
+
+function requireAuthPage(req, res) {
+  const session = getSession(req);
+  if (!session) {
+    redirect(res, "/login");
+    return null;
+  }
+  return session;
+}
+
+function requireAuthApi(req, res) {
+  const session = getSession(req);
+  if (!session) {
+    sendJson(res, 401, { ok: false, error: "unauthorized" });
+    return null;
+  }
+  return session;
+}
+
+function clampBingoSize(size) {
+  const n = Number(size);
+  if (!Number.isInteger(n)) return null;
+  if (n < 5 || n > 10) return null;
+  return n;
+}
+
+async function main() {
+  await loadUsers();
+
+  const server = http.createServer(async (req, res) => {
+    // Small hardening: prevent basic MIME sniffing and framing.
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+
+    const u = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+    const pathname = u.pathname;
+
+    // Static assets
+    if (req.method === "GET" && pathname.startsWith("/static/")) {
+      const rel = pathname.slice("/static/".length);
+      const filePath = path.join(PUBLIC_DIR, rel);
+      // Prevent path traversal
+      if (!filePath.startsWith(PUBLIC_DIR + path.sep)) {
+        sendJson(res, 400, { ok: false, error: "bad_request" });
+        return;
+      }
+      await sendFile(res, filePath);
+      return;
+    }
+
+    // Pages
+    if (req.method === "GET" && pathname === "/") {
+      const session = getSession(req);
+      redirect(res, session ? "/lobby" : "/login");
+      return;
+    }
+    if (req.method === "GET" && pathname === "/login") {
+      const session = getSession(req);
+      if (session) {
+        redirect(res, "/lobby");
+        return;
+      }
+      await sendFile(res, path.join(VIEWS_DIR, "login.html"));
+      return;
+    }
+    if (req.method === "GET" && pathname === "/signup") {
+      const session = getSession(req);
+      if (session) {
+        redirect(res, "/lobby");
+        return;
+      }
+      await sendFile(res, path.join(VIEWS_DIR, "signup.html"));
+      return;
+    }
+    if (req.method === "GET" && pathname === "/lobby") {
+      if (!requireAuthPage(req, res)) return;
+      await sendFile(res, path.join(VIEWS_DIR, "lobby.html"));
+      return;
+    }
+    if (req.method === "GET" && pathname.startsWith("/room/")) {
+      if (!requireAuthPage(req, res)) return;
+      await sendFile(res, path.join(VIEWS_DIR, "room.html"));
+      return;
+    }
+
+    // SSE
+    if (req.method === "GET" && pathname.startsWith("/sse/room/")) {
+      const session = requireAuthApi(req, res);
+      if (!session) return;
+      const code = pathname.slice("/sse/room/".length).toUpperCase();
+      const room = rooms.get(code);
+      if (!room) {
+        sendJson(res, 404, { ok: false, error: "room_not_found" });
+        return;
+      }
+      const player = room.players.get(session.userId);
+      if (!player) {
+        sendJson(res, 403, { ok: false, error: "not_in_room" });
+        return;
+      }
+
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+      });
+      res.write(`: connected ${nowIso()}\n\n`);
+
+      const sub = { res, userId: session.userId };
+      room.subscribers.add(sub);
+      room.connections.set(session.userId, (room.connections.get(session.userId) || 0) + 1);
+      player.online = true;
+
+      // Initial state for this client
+      sseWrite(res, "state", roomPublicState(room));
+
+      // Announce presence change
+      broadcastRoom(room, "state", roomPublicState(room));
+
+      const heartbeat = setInterval(() => {
+        try {
+          res.write(`: heartbeat ${nowIso()}\n\n`);
+        } catch {
+          // ignore
+        }
+      }, 25000);
+
+      req.on("close", () => {
+        clearInterval(heartbeat);
+        room.subscribers.delete(sub);
+        const prev = room.connections.get(session.userId) || 0;
+        const next = Math.max(0, prev - 1);
+        if (next === 0) room.connections.delete(session.userId);
+        else room.connections.set(session.userId, next);
+
+        // If no more active connections for that user, mark offline.
+        if (!room.connections.has(session.userId)) {
+          const p = room.players.get(session.userId);
+          if (p) p.online = false;
+          broadcastRoom(room, "state", roomPublicState(room));
+        }
+      });
+      return;
+    }
+
+    // API
+    if (pathname.startsWith("/api/")) {
+      if (req.method === "GET" && pathname === "/api/me") {
+        const session = getSession(req);
+        if (!session) {
+          sendJson(res, 200, { ok: true, user: null });
+          return;
+        }
+        sendJson(res, 200, { ok: true, user: { userId: session.userId, username: session.username } });
+        return;
+      }
+
+      if (req.method === "GET" && pathname === "/api/health") {
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/signup") {
+        const body = await readJsonBody(req);
+        if (!body.ok) {
+          sendJson(res, 400, { ok: false, error: body.error });
+          return;
+        }
+        const username = normalizeUsername(body.value.username);
+        const password = String(body.value.password || "");
+        if (username.length < 2 || username.length > 20) {
+          sendJson(res, 400, { ok: false, error: "username_length" });
+          return;
+        }
+        if (password.length < 4 || password.length > 100) {
+          sendJson(res, 400, { ok: false, error: "password_length" });
+          return;
+        }
+        const exists = userDb.users.some((u) => u.username.toLowerCase() === username.toLowerCase());
+        if (exists) {
+          sendJson(res, 409, { ok: false, error: "username_taken" });
+          return;
+        }
+        const user = {
+          id: userDb.nextId++,
+          username,
+          passwordHash: hashPassword(password),
+          createdAt: nowIso(),
+        };
+        userDb.users.push(user);
+        await queueUserDbWrite();
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/login") {
+        const body = await readJsonBody(req);
+        if (!body.ok) {
+          sendJson(res, 400, { ok: false, error: body.error });
+          return;
+        }
+        const username = normalizeUsername(body.value.username);
+        const password = String(body.value.password || "");
+        const user = userDb.users.find((u) => u.username.toLowerCase() === username.toLowerCase());
+        if (!user || !verifyPassword(password, user.passwordHash)) {
+          sendJson(res, 401, { ok: false, error: "invalid_credentials" });
+          return;
+        }
+        setSession(res, { userId: user.id, username: user.username });
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/logout") {
+        clearSession(req, res);
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/rooms") {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+        const body = await readJsonBody(req);
+        if (!body.ok) {
+          sendJson(res, 400, { ok: false, error: body.error });
+          return;
+        }
+        const size = clampBingoSize(body.value.size);
+        if (!size) {
+          sendJson(res, 400, { ok: false, error: "invalid_size" });
+          return;
+        }
+
+        let code = pickRoomCode();
+        for (let i = 0; i < 10 && rooms.has(code); i++) code = pickRoomCode();
+      if (rooms.has(code)) {
+          sendJson(res, 500, { ok: false, error: "room_code_collision" });
+          return;
+        }
+
+        const room = {
+          code,
+          size,
+          targetLines: 5,
+          status: "lobby",
+          hostUserId: session.userId,
+          createdAt: nowIso(),
+          players: new Map(),
+          calledNumbers: new Set(),
+          lastNumber: null,
+          winners: [],
+          subscribers: new Set(),
+          connections: new Map(), // userId -> count
+        };
+
+        const hostPlayer = {
+          userId: session.userId,
+          username: session.username,
+          board: generateBoard(size),
+          joinedAt: nowIso(),
+          online: true,
+        };
+        room.players.set(session.userId, hostPlayer);
+        rooms.set(code, room);
+
+        sendJson(res, 200, { ok: true, code });
+        return;
+      }
+
+      if (req.method === "POST" && pathname.startsWith("/api/rooms/") && pathname.endsWith("/join")) {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+        const code = pathname.slice("/api/rooms/".length, -"/join".length).toUpperCase();
+        const room = rooms.get(code);
+        if (!room) {
+          sendJson(res, 404, { ok: false, error: "room_not_found" });
+          return;
+        }
+        const existing = room.players.get(session.userId);
+        if (!existing) {
+          if (room.players.size >= 8) {
+            sendJson(res, 409, { ok: false, error: "room_full" });
+            return;
+          }
+          if (room.status !== "lobby") {
+            sendJson(res, 409, { ok: false, error: "room_not_joinable" });
+            return;
+          }
+          room.players.set(session.userId, {
+            userId: session.userId,
+            username: session.username,
+            board: generateBoard(room.size),
+            joinedAt: nowIso(),
+            online: true,
+          });
+        } else {
+          existing.online = true;
+        }
+
+        broadcastRoom(room, "state", roomPublicState(room));
+        const p = room.players.get(session.userId);
+        sendJson(res, 200, { ok: true, room: roomPublicState(room), board: p.board });
+        return;
+      }
+
+      if (req.method === "POST" && pathname.startsWith("/api/rooms/") && pathname.endsWith("/leave")) {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+        const code = pathname.slice("/api/rooms/".length, -"/leave".length).toUpperCase();
+        const room = rooms.get(code);
+        if (!room) {
+          sendJson(res, 404, { ok: false, error: "room_not_found" });
+          return;
+        }
+        room.players.delete(session.userId);
+        room.connections.delete(session.userId);
+        if (room.hostUserId === session.userId) {
+          const nextHost = room.players.values().next().value;
+          room.hostUserId = nextHost ? nextHost.userId : null;
+        }
+        broadcastRoom(room, "state", roomPublicState(room));
+        pruneRoomIfEmpty(room);
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      if (req.method === "POST" && pathname.startsWith("/api/rooms/") && pathname.endsWith("/start")) {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+        const code = pathname.slice("/api/rooms/".length, -"/start".length).toUpperCase();
+        const room = rooms.get(code);
+        if (!room) {
+          sendJson(res, 404, { ok: false, error: "room_not_found" });
+          return;
+        }
+        if (room.hostUserId !== session.userId) {
+          sendJson(res, 403, { ok: false, error: "host_only" });
+          return;
+        }
+        if (room.players.size < 1) {
+          sendJson(res, 409, { ok: false, error: "no_players" });
+          return;
+        }
+        room.status = "playing";
+        room.calledNumbers = new Set();
+        room.lastNumber = null;
+        room.winners = [];
+        broadcastRoom(room, "state", roomPublicState(room));
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      if (req.method === "POST" && pathname.startsWith("/api/rooms/") && pathname.endsWith("/draw")) {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+        const code = pathname.slice("/api/rooms/".length, -"/draw".length).toUpperCase();
+        const room = rooms.get(code);
+        if (!room) {
+          sendJson(res, 404, { ok: false, error: "room_not_found" });
+          return;
+        }
+        if (room.hostUserId !== session.userId) {
+          sendJson(res, 403, { ok: false, error: "host_only" });
+          return;
+        }
+        if (room.status !== "playing") {
+          sendJson(res, 409, { ok: false, error: "not_playing" });
+          return;
+        }
+        const max = room.size * room.size;
+        const remaining = [];
+        for (let n = 1; n <= max; n++) if (!room.calledNumbers.has(n)) remaining.push(n);
+        if (remaining.length === 0) {
+          room.status = "ended";
+          room.winners = [];
+          broadcastRoom(room, "state", roomPublicState(room));
+          sendJson(res, 200, { ok: true, number: null });
+          return;
+        }
+        const number = remaining[crypto.randomInt(0, remaining.length)];
+        room.calledNumbers.add(number);
+        room.lastNumber = number;
+
+        // Winner check: first time someone hits >= targetLines -> game ends.
+        const called = room.calledNumbers;
+        const winners = [];
+        for (const p of room.players.values()) {
+          const lines = countCompleteLines(p.board, called);
+          if (lines >= room.targetLines) winners.push({ userId: p.userId, username: p.username, lines });
+        }
+        if (winners.length > 0) {
+          room.status = "ended";
+          room.winners = winners;
+        }
+
+        broadcastRoom(room, "state", roomPublicState(room));
+        sendJson(res, 200, { ok: true, number });
+        return;
+      }
+
+      sendJson(res, 404, { ok: false, error: "api_not_found" });
+      return;
+    }
+
+    sendJson(res, 404, { ok: false, error: "not_found" });
+  });
+
+  server.listen(PORT, HOST, () => {
+    // eslint-disable-next-line no-console
+    console.log(`Bingo server listening on http://localhost:${PORT} (bind ${HOST})`);
+  });
+}
+
+main().catch((err) => {
+  // eslint-disable-next-line no-console
+  console.error(err);
+  process.exitCode = 1;
+});
