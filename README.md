@@ -23,6 +23,20 @@ npm run dev
 
 브라우저에서 `http://localhost:3000` 접속.
 
+## 배포(외부 접속)
+
+GitHub에 올린 뒤 Render( GitHub 연동 )로 배포하면 외부에서 접속할 수 있습니다. (`render.yaml` 포함)
+
+1) GitHub에서 새 저장소(repo) 생성  
+2) 로컬에서 원격 저장소 연결 후 푸시:
+
+```bash
+git remote add origin <YOUR_GITHUB_REPO_URL>
+git push -u origin main
+```
+
+3) Render 대시보드에서 `New +` -> `Blueprint` -> 해당 GitHub repo 선택 -> Deploy  
+
 ## 게임 규칙
 
 - 방 만들 때 보드 크기 선택: 5x5 ~ 10x10

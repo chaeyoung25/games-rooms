@@ -7,6 +7,7 @@ const crypto = require("node:crypto");
 const PORT = Number(process.env.PORT || 3000);
 const HOST = process.env.HOST || "0.0.0.0";
 const SESSION_SECRET = process.env.SESSION_SECRET || "dev-secret-change-me";
+const COOKIE_SECURE = process.env.COOKIE_SECURE === "1";
 
 const ROOT_DIR = __dirname;
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
@@ -157,7 +158,9 @@ function setSession(res, sessionData) {
     lastSeenAt: Date.now(),
   });
 
-  const cookie = `${SESSION_COOKIE}=${encodeURIComponent(makeSessionCookieValue(sid))}; HttpOnly; Path=/; SameSite=Lax`;
+  const cookie = `${SESSION_COOKIE}=${encodeURIComponent(makeSessionCookieValue(sid))}; HttpOnly; Path=/; SameSite=Lax${
+    COOKIE_SECURE ? "; Secure" : ""
+  }`;
   res.setHeader("Set-Cookie", cookie);
 }
 
@@ -168,7 +171,7 @@ function clearSession(req, res) {
   if (sid) sessions.delete(sid);
   res.setHeader(
     "Set-Cookie",
-    `${SESSION_COOKIE}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0`
+    `${SESSION_COOKIE}=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0${COOKIE_SECURE ? "; Secure" : ""}`
   );
 }
 
