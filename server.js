@@ -530,7 +530,7 @@ async function main() {
         return;
       }
 
-      if (req.method === "GET" && pathname === "/api/health") {
+      if ((req.method === "GET" || req.method === "HEAD") && pathname === "/api/health") {
         sendJson(res, 200, { ok: true });
         return;
       }
