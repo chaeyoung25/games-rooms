@@ -6,7 +6,7 @@
     <title>Bingo Rooms - Room</title>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
-  <body>
+  <body class="page-room">
     <div class="bg" aria-hidden="true"></div>
     <div class="pet pet-left" aria-hidden="true"></div>
     <div class="pet pet-right" aria-hidden="true"></div>
@@ -15,7 +15,7 @@
         <div class="brand">
           <div class="mascot" aria-hidden="true"></div>
           <div class="brand-text">
-            <h1><span class="spark" aria-hidden="true">🧁🎯</span> BINGO ROOMS</h1>
+            <h1><span class="spark" aria-hidden="true">ARCADE</span> BINGO ROOMS</h1>
             <div class="tag">방 코드로 함께 플레이</div>
           </div>
         </div>
@@ -25,63 +25,67 @@
         </div>
       </div>
 
-      <div class="card" style="margin-bottom: 14px">
-        <div class="inner">
-          <div class="room-head">
-            <div class="row">
-              <span class="pill">방 코드 <span class="room-code" id="code"></span></span>
-              <span class="pill">크기 <b id="size"></b></span>
-              <span class="pill">목표 <b id="targetLines"></b>줄</span>
-              <span class="pill">턴 제한 <b id="turnLimit">-</b>초</span>
-              <span class="pill">상태 <b id="status"></b></span>
-              <span class="pill">내 라인 <b id="myLines">0</b></span>
+      <div class="room-layout">
+        <section class="room-stage">
+          <div class="card room-main">
+            <div class="inner">
+              <div class="room-head">
+                <div class="row">
+                  <span class="pill">방 코드 <span class="room-code" id="code"></span></span>
+                  <span class="pill">크기 <b id="size"></b></span>
+                  <span class="pill">목표 <b id="targetLines"></b>줄</span>
+                  <span class="pill">턴 제한 <b id="turnLimit">-</b>초</span>
+                  <span class="pill">상태 <b id="status"></b></span>
+                  <span class="pill">내 라인 <b id="myLines">0</b></span>
+                </div>
+              </div>
+              <div class="row section-row">
+                <div id="turnNotice" class="banner">게임 시작을 기다리는 중</div>
+                <div class="pill">남은 시간 <b id="turnCountdown">-</b></div>
+                <button id="draw" class="primary">내 차례 번호 뽑기</button>
+              </div>
+              <div class="row section-row">
+                <div class="pill">최근 번호 <span aria-hidden="true">🔔</span></div>
+                <div class="big-number" id="lastNumber">-</div>
+                <div id="net"></div>
+              </div>
+              <div id="banner" class="section-row"></div>
+              <div id="error" class="error"></div>
             </div>
-            <div class="row" id="hostControls" style="display: none">
-              <label for="drawTimeout" class="muted">제한시간</label>
-              <select id="drawTimeout">
-                <option value="3">3초</option>
-                <option value="5">5초</option>
-                <option value="7">7초</option>
-                <option value="10" selected>10초</option>
-                <option value="15">15초</option>
-                <option value="20">20초</option>
-              </select>
-              <button id="start" class="good">게임 시작</button>
-            </div>
           </div>
-          <div class="row" style="margin-top: 12px">
-            <div id="turnNotice" class="banner">게임 시작을 기다리는 중</div>
-            <div class="pill">남은 시간 <b id="turnCountdown">-</b></div>
-            <button id="draw" class="primary">내 차례 번호 뽑기</button>
-          </div>
-          <div class="row" style="margin-top: 12px">
-            <div class="pill">최근 번호 <span aria-hidden="true">🔔</span></div>
-            <div class="big-number" id="lastNumber">-</div>
-            <div id="net"></div>
-          </div>
-          <div id="banner" style="margin-top: 12px"></div>
-          <div id="error" class="error" style="margin-top: 10px"></div>
-        </div>
-      </div>
 
-      <div class="grid2">
-        <div class="card">
-          <div class="inner">
-            <h2><span aria-hidden="true">🧩</span> 내 빙고판</h2>
-            <div id="board" class="board"></div>
-            <div class="muted" style="margin-top: 10px">
-              참가자가 차례대로 번호를 뽑습니다. 내 차례에 제한시간 안에 눌러주세요.
+          <div class="card">
+            <div class="inner">
+              <h2>내 빙고판</h2>
+              <div id="board" class="board"></div>
+              <div class="muted info-note">
+                참가자가 차례대로 번호를 뽑습니다. 내 차례에 제한시간 안에 눌러주세요.
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div class="card">
-          <div class="inner">
-            <h2><span aria-hidden="true">🧑‍🤝‍🧑</span> 참가자</h2>
-            <div class="muted">최대 8명</div>
-            <div id="players" class="players"></div>
+        <aside class="room-side">
+          <div class="card side-card">
+            <div class="inner">
+              <h2>방 컨트롤</h2>
+              <div class="row" id="hostControls" style="display: none">
+                <label for="drawTimeout" class="muted">제한시간</label>
+                <select id="drawTimeout">
+                  <option value="3">3초</option>
+                  <option value="5">5초</option>
+                  <option value="7">7초</option>
+                  <option value="10" selected>10초</option>
+                  <option value="15">15초</option>
+                  <option value="20">20초</option>
+                </select>
+                <button id="start" class="good">게임 시작</button>
+              </div>
+              <div class="muted">최대 8명</div>
+              <div id="players" class="players"></div>
+            </div>
           </div>
-        </div>
+        </aside>
       </div>
     </div>
 

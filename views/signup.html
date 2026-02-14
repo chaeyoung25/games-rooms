@@ -6,7 +6,7 @@
     <title>Bingo Rooms - Signup</title>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
-  <body>
+  <body class="page-signup">
     <div class="bg" aria-hidden="true"></div>
     <div class="pet pet-left" aria-hidden="true"></div>
     <div class="pet pet-right" aria-hidden="true"></div>
@@ -15,21 +15,21 @@
         <div class="brand">
           <div class="mascot" aria-hidden="true"></div>
           <div class="brand-text">
-            <h1><span class="spark" aria-hidden="true">🌈🧸</span> BINGO ROOMS</h1>
+            <h1><span class="spark" aria-hidden="true">ARCADE</span> BINGO ROOMS</h1>
             <div class="tag">회원가입 후 바로 로그인할 수 있어요</div>
           </div>
         </div>
       </div>
 
-      <div class="card">
+      <div class="card auth-card">
         <div class="inner">
           <h2>회원가입</h2>
           <form id="signup-form">
-            <div style="margin-bottom: 12px">
+            <div class="field">
               <label for="username">아이디 (2~20자)</label>
               <input id="username" autocomplete="username" required />
             </div>
-            <div style="margin-bottom: 12px">
+            <div class="field">
               <label for="password">비밀번호 (4자 이상)</label>
               <input id="password" type="password" autocomplete="new-password" required />
             </div>

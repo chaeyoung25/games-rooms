@@ -12,7 +12,7 @@ const COOKIE_SECURE = process.env.COOKIE_SECURE === "1";
 const ROOT_DIR = __dirname;
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");
 const VIEWS_DIR = path.join(ROOT_DIR, "views");
-const DATA_DIR = path.join(ROOT_DIR, "data");
+const DATA_DIR = path.resolve(process.env.DATA_DIR || path.join(ROOT_DIR, "data"));
 const USERS_FILE = path.join(DATA_DIR, "users.json");
 
 function nowIso() {

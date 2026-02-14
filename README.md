@@ -37,6 +37,18 @@ git push -u origin main
 
 3) Render 대시보드에서 `New +` -> `Blueprint` -> 해당 GitHub repo 선택 -> Deploy  
 
+4) 배포 완료 후 Render가 발급한 주소로 접속  
+예: `https://bingo-rooms.onrender.com`
+
+5) 외부 사용자도 같은 URL로 접속해서 회원가입/로그인/방 참여 가능
+
+### 운영 팁
+
+- `render.yaml`에 `COOKIE_SECURE=1` 이 이미 설정되어 있어 HTTPS 환경에서 세션 쿠키가 안전하게 동작합니다.
+- `DATA_DIR`는 서버의 회원 데이터 저장 경로입니다.
+- 현재 `plan: free` 기준으로는 인스턴스 재배포/재시작 시 파일 데이터가 초기화될 수 있습니다.
+- 회원 데이터를 영구 보관하려면 DB(Postgres/Supabase 등)로 옮기거나, Render 유료 플랜 + 디스크 사용으로 전환하세요.
+
 ## 게임 규칙
 
 - 방 만들 때 보드 크기 선택: 5x5 ~ 10x10

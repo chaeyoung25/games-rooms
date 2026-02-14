@@ -6,7 +6,7 @@
     <title>Bingo Rooms - Lobby</title>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
-  <body>
+  <body class="page-lobby">
     <div class="bg" aria-hidden="true"></div>
     <div class="pet pet-left" aria-hidden="true"></div>
     <div class="pet pet-right" aria-hidden="true"></div>
@@ -15,7 +15,7 @@
         <div class="brand">
           <div class="mascot" aria-hidden="true"></div>
           <div class="brand-text">
-            <h1><span class="spark" aria-hidden="true">🍬🟦🟩🟨</span> BINGO ROOMS</h1>
+            <h1><span class="spark" aria-hidden="true">ARCADE</span> BINGO ROOMS</h1>
             <div class="tag">한 방 최대 8명, 보드는 5x5~10x10</div>
           </div>
         </div>
@@ -28,8 +28,8 @@
       <div class="grid2">
         <div class="card">
           <div class="inner">
-            <h2><span aria-hidden="true">🏗️</span> 방 만들기</h2>
-            <div style="margin-bottom: 12px">
+            <h2>방 만들기</h2>
+            <div class="field">
               <label for="size">빙고 크기</label>
               <select id="size">
                 <option value="5">5 x 5</option>
@@ -48,8 +48,8 @@
 
         <div class="card">
           <div class="inner">
-            <h2><span aria-hidden="true">🚪</span> 방 참가</h2>
-            <div style="margin-bottom: 12px">
+            <h2>방 참가</h2>
+            <div class="field">
               <label for="code">방 코드</label>
               <input id="code" placeholder="예: A7K9Q2" />
             </div>
@@ -60,6 +60,36 @@
           </div>
         </div>
       </div>
+
+      <section class="lobby-showcase">
+        <div class="showcase-head">
+          <h2>이번 판 스타일</h2>
+          <span class="pill">ARCADE PICKS</span>
+        </div>
+        <div class="showcase-grid">
+          <article class="show-card variant-mint">
+            <div class="show-thumb" aria-hidden="true"></div>
+            <div class="show-body">
+              <h3>스피드 매치</h3>
+              <p>3초 턴 제한으로 빠르게 끝나는 라운드</p>
+            </div>
+          </article>
+          <article class="show-card variant-sun">
+            <div class="show-thumb" aria-hidden="true"></div>
+            <div class="show-body">
+              <h3>클래식 모드</h3>
+              <p>10초 턴 제한으로 가장 안정적인 플레이</p>
+            </div>
+          </article>
+          <article class="show-card variant-rose">
+            <div class="show-thumb" aria-hidden="true"></div>
+            <div class="show-body">
+              <h3>집중전</h3>
+              <p>20초 제한에서 계산하며 천천히 승부</p>
+            </div>
+          </article>
+        </div>
+      </section>
     </div>
 
     <script src="/static/lobby.js"></script>
