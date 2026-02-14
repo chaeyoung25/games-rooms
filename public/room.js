@@ -13,6 +13,16 @@ function $(id) {
   return document.getElementById(id);
 }
 
+function bump(el, cls, ms = 650) {
+  if (!el) return;
+  el.classList.remove(cls);
+  // Reflow to restart animation reliably
+  // eslint-disable-next-line no-unused-expressions
+  el.offsetWidth;
+  el.classList.add(cls);
+  window.setTimeout(() => el.classList.remove(cls), ms);
+}
+
 function countLines(board, calledSet) {
   const size = board.length;
   let lines = 0;
@@ -92,12 +102,16 @@ function updateBoardMarks(board, room) {
   const called = new Set(room.calledNumbers || []);
   const last = room.lastNumber;
   const cells = $("board").querySelectorAll(".cell");
+  let lastCell = null;
   for (const cell of cells) {
     const n = Number(cell.dataset.num);
     const isMarked = called.has(n);
     cell.classList.toggle("marked", isMarked);
-    cell.classList.toggle("last", last != null && n === last);
+    const isLast = last != null && n === last;
+    cell.classList.toggle("last", isLast);
+    if (isLast) lastCell = cell;
   }
+  if (lastCell) bump(lastCell, "hit", 520);
   $("myLines").textContent = String(countLines(board, called));
 }
 
@@ -105,12 +119,14 @@ function renderBanner(me, room) {
   const el = $("banner");
   el.textContent = "";
   el.className = "";
+  document.body.classList.remove("celebrate");
 
   if (room.status === "ended" && Array.isArray(room.winners) && room.winners.length > 0) {
     const names = room.winners.map((w) => w.username).join(", ");
     const meWin = room.winners.some((w) => w.userId === me.userId);
     el.textContent = `빙고! 승자: ${names}`;
     el.className = "banner " + (meWin ? "good" : "");
+    if (meWin) document.body.classList.add("celebrate");
   } else if (room.status === "ended") {
     el.textContent = "게임 종료 (승자 없음)";
     el.className = "banner";
@@ -151,6 +167,7 @@ window.initRoomPage = async function initRoomPage() {
 
   board = join.data.board;
   roomState = join.data.room;
+  let prevLastNumber = roomState.lastNumber;
 
   buildBoard(board);
 
@@ -160,6 +177,10 @@ window.initRoomPage = async function initRoomPage() {
     $("size").textContent = `${room.size}x${room.size}`;
     $("targetLines").textContent = String(room.targetLines || 5);
     $("lastNumber").textContent = room.lastNumber == null ? "-" : String(room.lastNumber);
+    if (room.lastNumber != null && room.lastNumber !== prevLastNumber) {
+      bump($("lastNumber"), "bump", 720);
+      prevLastNumber = room.lastNumber;
+    }
 
     renderPlayers(room);
     updateBoardMarks(board, room);

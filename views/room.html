@@ -7,11 +7,15 @@
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body>
+    <div class="bg" aria-hidden="true"></div>
     <div class="wrap">
       <div class="topbar">
         <div class="brand">
-          <h1>BINGO ROOMS</h1>
-          <div class="tag">방 코드로 함께 플레이</div>
+          <div class="mascot" aria-hidden="true"></div>
+          <div class="brand-text">
+            <h1><span class="spark" aria-hidden="true">🧁🎯</span> BINGO ROOMS</h1>
+            <div class="tag">방 코드로 함께 플레이</div>
+          </div>
         </div>
         <div class="row">
           <span class="pill">접속: <b id="me"></b></span>
@@ -35,7 +39,7 @@
             </div>
           </div>
           <div class="row" style="margin-top: 12px">
-            <div class="pill">최근 번호</div>
+            <div class="pill">최근 번호 <span aria-hidden="true">🔔</span></div>
             <div class="big-number" id="lastNumber">-</div>
             <div id="net"></div>
           </div>
@@ -47,7 +51,7 @@
       <div class="grid2">
         <div class="card">
           <div class="inner">
-            <h2>내 빙고판</h2>
+            <h2><span aria-hidden="true">🧩</span> 내 빙고판</h2>
             <div id="board" class="board"></div>
             <div class="muted" style="margin-top: 10px">
               번호는 방장이 랜덤으로 뽑습니다. 뽑힌 번호는 자동으로 표시됩니다.
@@ -57,7 +61,7 @@
 
         <div class="card">
           <div class="inner">
-            <h2>참가자</h2>
+            <h2><span aria-hidden="true">🧑‍🤝‍🧑</span> 참가자</h2>
             <div class="muted">최대 8명</div>
             <div id="players" class="players"></div>
           </div>
