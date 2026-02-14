@@ -1,11 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="116" height="116" viewBox="0 0 116 116" fill="none">
   <defs>
     <linearGradient id="a" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#79daff"/>
-      <stop offset="1" stop-color="#3f7cff"/>
+      <stop offset="0" stop-color="#9ce7c3"/>
+      <stop offset="1" stop-color="#5eb78b"/>
     </linearGradient>
   </defs>
   <rect x="4" y="4" width="108" height="108" rx="30" fill="url(#a)"/>
-  <rect x="4" y="4" width="108" height="108" rx="30" stroke="#ffffff" stroke-opacity="0.45" stroke-width="8"/>
-  <path d="M58 22L66 45L90 45L70 60L78 84L58 69L38 84L46 60L26 45L50 45L58 22Z" fill="#f8fdff"/>
+  <rect x="4" y="4" width="108" height="108" rx="30" stroke="#ffffff" stroke-opacity="0.48" stroke-width="8"/>
+  <circle cx="58" cy="56" r="25" fill="#fff7ea"/>
+  <ellipse cx="48" cy="54" rx="3.5" ry="4.2" fill="#4a4a4a"/>
+  <ellipse cx="68" cy="54" rx="3.5" ry="4.2" fill="#4a4a4a"/>
+  <ellipse cx="58" cy="64" rx="5" ry="3.7" fill="#f48ca7"/>
+  <circle cx="41" cy="39" r="8" fill="#fff7ea"/>
+  <circle cx="75" cy="39" r="8" fill="#fff7ea"/>
 </svg>

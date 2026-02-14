@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" fill="none">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#8fd8ff"/>
+      <stop offset="1" stop-color="#67b4ff"/>
+    </linearGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe8a2"/>
+      <stop offset="1" stop-color="#ffd069"/>
+    </linearGradient>
+    <linearGradient id="hill1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#9be7c7"/>
+      <stop offset="1" stop-color="#67c395"/>
+    </linearGradient>
+    <linearGradient id="hill2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#bceccf"/>
+      <stop offset="1" stop-color="#88d5ae"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <circle cx="1330" cy="170" r="84" fill="url(#sun)"/>
+  <ellipse cx="420" cy="270" rx="130" ry="56" fill="#ffffff" fill-opacity="0.62"/>
+  <ellipse cx="620" cy="220" rx="100" ry="42" fill="#ffffff" fill-opacity="0.54"/>
+  <ellipse cx="980" cy="280" rx="144" ry="60" fill="#ffffff" fill-opacity="0.58"/>
+  <path d="M0 640C220 560 430 550 640 608C860 668 1110 700 1600 600V900H0V640Z" fill="url(#hill1)"/>
+  <path d="M0 720C250 654 480 648 700 700C930 754 1210 760 1600 702V900H0V720Z" fill="url(#hill2)"/>
+  <g opacity="0.65">
+    <circle cx="180" cy="620" r="20" fill="#ffe4f0"/>
+    <circle cx="1460" cy="640" r="18" fill="#fff4d6"/>
+    <circle cx="1260" cy="710" r="14" fill="#d4fff0"/>
+    <circle cx="340" cy="720" r="16" fill="#ffd9c1"/>
+  </g>
+</svg>
