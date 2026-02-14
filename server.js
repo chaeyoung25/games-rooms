@@ -346,6 +346,12 @@ function roomPublicState(room) {
     calledNumbers: Array.from(room.calledNumbers),
     lastNumber: room.lastNumber ?? null,
     winners: room.winners,
+    drawTimeoutSeconds: room.drawTimeoutSeconds,
+    turnUserId: room.turnUserId ?? null,
+    turnEndsAt: room.turnEndsAt ?? null,
+    lastDrawByUserId: room.lastDrawByUserId ?? null,
+    lastDrawByUsername: room.lastDrawByUsername ?? null,
+    lastDrawReason: room.lastDrawReason ?? null,
   };
 }
 
@@ -366,6 +372,7 @@ function broadcastRoom(room, event, data) {
 
 function pruneRoomIfEmpty(room) {
   if (room.players.size > 0) return;
+  clearTurnTimer(room);
   try {
     for (const sub of room.subscribers) sub.res.end();
   } catch {
@@ -397,6 +404,110 @@ function clampBingoSize(size) {
   if (!Number.isInteger(n)) return null;
   if (n < 5 || n > 10) return null;
   return n;
+}
+
+function clampTurnSeconds(seconds) {
+  const n = Number(seconds);
+  const allowed = new Set([3, 5, 7, 10, 15, 20]);
+  if (!Number.isInteger(n)) return null;
+  if (!allowed.has(n)) return null;
+  return n;
+}
+
+function clearTurnTimer(room) {
+  if (room.turnTimer) {
+    clearTimeout(room.turnTimer);
+    room.turnTimer = null;
+  }
+}
+
+function buildTurnOrder(room) {
+  // Keep insertion order (join order) from Map.
+  return Array.from(room.players.keys());
+}
+
+function evaluateWinners(room) {
+  const winners = [];
+  for (const p of room.players.values()) {
+    const lines = countCompleteLines(p.board, room.calledNumbers);
+    if (lines >= room.targetLines) winners.push({ userId: p.userId, username: p.username, lines });
+  }
+  return winners;
+}
+
+function setTurnByCursor(room) {
+  if (room.turnOrder.length === 0) {
+    room.turnUserId = null;
+    room.turnEndsAt = null;
+    return;
+  }
+  room.turnCursor = ((room.turnCursor % room.turnOrder.length) + room.turnOrder.length) % room.turnOrder.length;
+  room.turnUserId = room.turnOrder[room.turnCursor];
+}
+
+function scheduleTurn(room) {
+  clearTurnTimer(room);
+  if (room.status !== "playing") return;
+  if (!room.turnUserId) return;
+
+  room.turnEndsAt = Date.now() + room.drawTimeoutSeconds * 1000;
+  room.turnTimer = setTimeout(() => {
+    const actor = room.turnUserId;
+    drawNextNumber(room, { actorUserId: actor, reason: "timeout" });
+  }, room.drawTimeoutSeconds * 1000);
+}
+
+function drawNextNumber(room, { actorUserId, reason }) {
+  if (room.status !== "playing") return { ok: false, error: "not_playing", number: null };
+
+  const max = room.size * room.size;
+  const remaining = [];
+  for (let n = 1; n <= max; n++) if (!room.calledNumbers.has(n)) remaining.push(n);
+
+  if (remaining.length === 0) {
+    room.status = "ended";
+    room.winners = [];
+    room.turnUserId = null;
+    room.turnEndsAt = null;
+    clearTurnTimer(room);
+    broadcastRoom(room, "state", roomPublicState(room));
+    return { ok: true, number: null };
+  }
+
+  const number = remaining[crypto.randomInt(0, remaining.length)];
+  room.calledNumbers.add(number);
+  room.lastNumber = number;
+  room.lastDrawByUserId = actorUserId ?? null;
+  {
+    const p = actorUserId ? room.players.get(actorUserId) : null;
+    room.lastDrawByUsername = p ? p.username : null;
+  }
+  room.lastDrawReason = reason;
+
+  const winners = evaluateWinners(room);
+  if (winners.length > 0) {
+    room.status = "ended";
+    room.winners = winners;
+    room.turnUserId = null;
+    room.turnEndsAt = null;
+    clearTurnTimer(room);
+    broadcastRoom(room, "state", roomPublicState(room));
+    return { ok: true, number };
+  }
+
+  // Advance to next player for the next turn.
+  if (room.turnOrder.length > 0) {
+    room.turnCursor = (room.turnCursor + 1) % room.turnOrder.length;
+    setTurnByCursor(room);
+    scheduleTurn(room);
+  } else {
+    room.turnUserId = null;
+    room.turnEndsAt = null;
+    clearTurnTimer(room);
+  }
+
+  broadcastRoom(room, "state", roomPublicState(room));
+  return { ok: true, number };
 }
 
 async function main() {
@@ -617,6 +728,7 @@ async function main() {
           code,
           size,
           targetLines: 5,
+          drawTimeoutSeconds: 10,
           status: "lobby",
           hostUserId: session.userId,
           createdAt: nowIso(),
@@ -624,6 +736,14 @@ async function main() {
           calledNumbers: new Set(),
           lastNumber: null,
           winners: [],
+          turnOrder: [],
+          turnCursor: 0,
+          turnUserId: null,
+          turnEndsAt: null,
+          turnTimer: null,
+          lastDrawByUserId: null,
+          lastDrawByUsername: null,
+          lastDrawReason: null,
           subscribers: new Set(),
           connections: new Map(), // userId -> count
         };
@@ -687,12 +807,33 @@ async function main() {
           sendJson(res, 404, { ok: false, error: "room_not_found" });
           return;
         }
+        const leavingWasTurn = room.turnUserId === session.userId;
         room.players.delete(session.userId);
         room.connections.delete(session.userId);
+        room.turnOrder = room.turnOrder.filter((id) => id !== session.userId);
+
         if (room.hostUserId === session.userId) {
           const nextHost = room.players.values().next().value;
           room.hostUserId = nextHost ? nextHost.userId : null;
         }
+
+        if (room.status === "playing") {
+          if (room.turnOrder.length === 0) {
+            room.status = "ended";
+            room.turnUserId = null;
+            room.turnEndsAt = null;
+            clearTurnTimer(room);
+          } else if (leavingWasTurn) {
+            if (room.turnCursor >= room.turnOrder.length) room.turnCursor = 0;
+            setTurnByCursor(room);
+            scheduleTurn(room);
+          } else if (!room.turnOrder.includes(room.turnUserId)) {
+            if (room.turnCursor >= room.turnOrder.length) room.turnCursor = 0;
+            setTurnByCursor(room);
+            scheduleTurn(room);
+          }
+        }
+
         broadcastRoom(room, "state", roomPublicState(room));
         pruneRoomIfEmpty(room);
         sendJson(res, 200, { ok: true });
@@ -712,14 +853,32 @@ async function main() {
           sendJson(res, 403, { ok: false, error: "host_only" });
           return;
         }
+        const body = await readJsonBody(req);
+        if (!body.ok) {
+          sendJson(res, 400, { ok: false, error: body.error });
+          return;
+        }
+        const timeout = clampTurnSeconds(body.value.drawTimeoutSeconds);
+        if (!timeout) {
+          sendJson(res, 400, { ok: false, error: "invalid_draw_timeout_seconds" });
+          return;
+        }
         if (room.players.size < 1) {
           sendJson(res, 409, { ok: false, error: "no_players" });
           return;
         }
         room.status = "playing";
+        room.drawTimeoutSeconds = timeout;
         room.calledNumbers = new Set();
         room.lastNumber = null;
         room.winners = [];
+        room.lastDrawByUserId = null;
+        room.lastDrawByUsername = null;
+        room.lastDrawReason = null;
+        room.turnOrder = buildTurnOrder(room);
+        room.turnCursor = 0;
+        setTurnByCursor(room);
+        scheduleTurn(room);
         broadcastRoom(room, "state", roomPublicState(room));
         sendJson(res, 200, { ok: true });
         return;
@@ -734,42 +893,25 @@ async function main() {
           sendJson(res, 404, { ok: false, error: "room_not_found" });
           return;
         }
-        if (room.hostUserId !== session.userId) {
-          sendJson(res, 403, { ok: false, error: "host_only" });
-          return;
-        }
         if (room.status !== "playing") {
           sendJson(res, 409, { ok: false, error: "not_playing" });
           return;
         }
-        const max = room.size * room.size;
-        const remaining = [];
-        for (let n = 1; n <= max; n++) if (!room.calledNumbers.has(n)) remaining.push(n);
-        if (remaining.length === 0) {
-          room.status = "ended";
-          room.winners = [];
-          broadcastRoom(room, "state", roomPublicState(room));
-          sendJson(res, 200, { ok: true, number: null });
+        if (!room.players.has(session.userId)) {
+          sendJson(res, 403, { ok: false, error: "not_in_room" });
           return;
         }
-        const number = remaining[crypto.randomInt(0, remaining.length)];
-        room.calledNumbers.add(number);
-        room.lastNumber = number;
-
-        // Winner check: first time someone hits >= targetLines -> game ends.
-        const called = room.calledNumbers;
-        const winners = [];
-        for (const p of room.players.values()) {
-          const lines = countCompleteLines(p.board, called);
-          if (lines >= room.targetLines) winners.push({ userId: p.userId, username: p.username, lines });
-        }
-        if (winners.length > 0) {
-          room.status = "ended";
-          room.winners = winners;
+        if (room.turnUserId !== session.userId) {
+          sendJson(res, 403, { ok: false, error: "not_your_turn" });
+          return;
         }
 
-        broadcastRoom(room, "state", roomPublicState(room));
-        sendJson(res, 200, { ok: true, number });
+        const result = drawNextNumber(room, { actorUserId: session.userId, reason: "manual" });
+        if (!result.ok) {
+          sendJson(res, 409, { ok: false, error: result.error || "draw_failed" });
+          return;
+        }
+        sendJson(res, 200, { ok: true, number: result.number });
         return;
       }
 

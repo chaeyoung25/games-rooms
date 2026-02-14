@@ -152,6 +152,8 @@ window.initRoomPage = async function initRoomPage() {
 
   let board = null;
   let roomState = null;
+  let prevLastNumber = null;
+  let countdownTimer = null;
 
   const join = await apiJson(`/api/rooms/${encodeURIComponent(code)}/join`, { method: "POST" });
   if (!join.ok || !join.data?.ok) {
@@ -167,15 +169,63 @@ window.initRoomPage = async function initRoomPage() {
 
   board = join.data.board;
   roomState = join.data.room;
-  let prevLastNumber = roomState.lastNumber;
-
+  prevLastNumber = roomState.lastNumber;
   buildBoard(board);
+
+  function playerNameById(room, userId) {
+    const found = room.players.find((p) => p.userId === userId);
+    return found ? found.username : "알 수 없음";
+  }
+
+  function updateTurnCountdown(room) {
+    if (room.status !== "playing" || !room.turnEndsAt) {
+      $("turnCountdown").textContent = "-";
+      return;
+    }
+    const remainMs = Number(room.turnEndsAt) - Date.now();
+    const remainSec = Math.max(0, Math.ceil(remainMs / 1000));
+    $("turnCountdown").textContent = String(remainSec);
+  }
+
+  function renderTurnNotice(room) {
+    const isMyTurn = room.status === "playing" && room.turnUserId === me.userId;
+    const turnEl = $("turnNotice");
+    turnEl.className = "banner";
+
+    if (room.status === "lobby") {
+      turnEl.textContent = "게임 시작을 기다리는 중";
+      return;
+    }
+    if (room.status === "ended") {
+      if (room.lastDrawReason === "timeout" && room.lastDrawByUsername) {
+        turnEl.textContent = `${room.lastDrawByUsername}님 시간이 지나 자동으로 번호가 뽑혔어요.`;
+      } else {
+        turnEl.textContent = "게임이 종료되었습니다.";
+      }
+      return;
+    }
+
+    if (!room.turnUserId) {
+      turnEl.textContent = "차례를 계산 중입니다.";
+      return;
+    }
+
+    const turnName = playerNameById(room, room.turnUserId);
+    if (isMyTurn) {
+      turnEl.textContent = "지금 당신 차례입니다. 번호를 뽑으세요!";
+      turnEl.className = "banner good";
+    } else {
+      turnEl.textContent = `지금 ${turnName}님 차례입니다.`;
+    }
+  }
 
   function applyState(room) {
     roomState = room;
     $("status").textContent = statusLabel(room.status);
     $("size").textContent = `${room.size}x${room.size}`;
     $("targetLines").textContent = String(room.targetLines || 5);
+    $("turnLimit").textContent = String(room.drawTimeoutSeconds || 10);
+    $("drawTimeout").value = String(room.drawTimeoutSeconds || 10);
     $("lastNumber").textContent = room.lastNumber == null ? "-" : String(room.lastNumber);
     if (room.lastNumber != null && room.lastNumber !== prevLastNumber) {
       bump($("lastNumber"), "bump", 720);
@@ -185,20 +235,42 @@ window.initRoomPage = async function initRoomPage() {
     renderPlayers(room);
     updateBoardMarks(board, room);
     renderBanner(me, room);
+    renderTurnNotice(room);
+    updateTurnCountdown(room);
+
+    if (countdownTimer) clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => updateTurnCountdown(roomState), 250);
 
     const isHost = me.userId === room.hostUserId;
     $("hostControls").style.display = isHost ? "flex" : "none";
+
     $("start").disabled = room.status !== "lobby";
-    $("draw").disabled = room.status !== "playing";
+    $("drawTimeout").disabled = room.status !== "lobby";
+
+    const canDraw = room.status === "playing" && room.turnUserId === me.userId;
+    $("draw").disabled = !canDraw;
   }
 
   $("start").addEventListener("click", async () => {
-    const r = await apiJson(`/api/rooms/${encodeURIComponent(code)}/start`, { method: "POST" });
-    if (!r.ok || !r.data?.ok) alert("시작 실패 (방장만 가능)");
+    const drawTimeoutSeconds = Number($("drawTimeout").value);
+    const r = await apiJson(`/api/rooms/${encodeURIComponent(code)}/start`, {
+      method: "POST",
+      body: { drawTimeoutSeconds },
+    });
+    if (!r.ok || !r.data?.ok) {
+      const err = r.data?.error || "unknown";
+      if (err === "invalid_draw_timeout_seconds") alert("제한시간은 3/5/7/10/15/20초만 가능합니다.");
+      else alert("시작 실패 (방장만 가능)");
+    }
   });
+
   $("draw").addEventListener("click", async () => {
     const r = await apiJson(`/api/rooms/${encodeURIComponent(code)}/draw`, { method: "POST" });
-    if (!r.ok || !r.data?.ok) alert("뽑기 실패 (방장만 가능)");
+    if (!r.ok || !r.data?.ok) {
+      const err = r.data?.error || "unknown";
+      if (err === "not_your_turn") alert("아직 내 차례가 아닙니다.");
+      else alert("번호 뽑기 실패");
+    }
   });
 
   applyState(roomState);
@@ -213,3 +285,4 @@ window.initRoomPage = async function initRoomPage() {
     $("net").className = "muted";
   };
 };
+

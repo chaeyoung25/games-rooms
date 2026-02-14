@@ -30,13 +30,27 @@
               <span class="pill">방 코드 <span class="room-code" id="code"></span></span>
               <span class="pill">크기 <b id="size"></b></span>
               <span class="pill">목표 <b id="targetLines"></b>줄</span>
+              <span class="pill">턴 제한 <b id="turnLimit">-</b>초</span>
               <span class="pill">상태 <b id="status"></b></span>
               <span class="pill">내 라인 <b id="myLines">0</b></span>
             </div>
             <div class="row" id="hostControls" style="display: none">
+              <label for="drawTimeout" class="muted">제한시간</label>
+              <select id="drawTimeout">
+                <option value="3">3초</option>
+                <option value="5">5초</option>
+                <option value="7">7초</option>
+                <option value="10" selected>10초</option>
+                <option value="15">15초</option>
+                <option value="20">20초</option>
+              </select>
               <button id="start" class="good">게임 시작</button>
-              <button id="draw" class="primary">번호 뽑기</button>
             </div>
+          </div>
+          <div class="row" style="margin-top: 12px">
+            <div id="turnNotice" class="banner">게임 시작을 기다리는 중</div>
+            <div class="pill">남은 시간 <b id="turnCountdown">-</b></div>
+            <button id="draw" class="primary">내 차례 번호 뽑기</button>
           </div>
           <div class="row" style="margin-top: 12px">
             <div class="pill">최근 번호 <span aria-hidden="true">🔔</span></div>
@@ -54,7 +68,7 @@
             <h2><span aria-hidden="true">🧩</span> 내 빙고판</h2>
             <div id="board" class="board"></div>
             <div class="muted" style="margin-top: 10px">
-              번호는 방장이 랜덤으로 뽑습니다. 뽑힌 번호는 자동으로 표시됩니다.
+              참가자가 차례대로 번호를 뽑습니다. 내 차례에 제한시간 안에 눌러주세요.
             </div>
           </div>
         </div>
