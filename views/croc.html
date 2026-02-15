@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Games Room - Croc</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body class="page-lobby">
+    <div class="bg" aria-hidden="true"></div>
+    <div class="pet pet-left" aria-hidden="true"></div>
+    <div class="pet pet-left2" aria-hidden="true"></div>
+    <div class="pet pet-center" aria-hidden="true"></div>
+    <div class="pet pet-right" aria-hidden="true"></div>
+    <div class="pet pet-right2" aria-hidden="true"></div>
+    <div class="emoji-cloud" aria-hidden="true">
+      <span class="emo emo-tv"></span>
+      <span class="emo emo-pad"></span>
+      <span class="emo emo-switch"></span>
+      <span class="emo emo-arcade"></span>
+    </div>
+    <div class="wrap">
+      <div class="topbar">
+        <div class="brand">
+          <div class="mascot" aria-hidden="true"></div>
+          <div class="brand-text">
+            <h1><span class="spark" aria-hidden="true">ARCADE</span> GAMES ROOM</h1>
+            <div class="tag">악어이빨 누르기: 함정 이빨을 피하세요</div>
+          </div>
+        </div>
+        <div class="row">
+          <a class="pill" href="/lobby">게임 목록</a>
+          <span class="pill">접속: <b id="me"></b></span>
+          <button id="logout" class="ghost">로그아웃</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="inner">
+          <div class="row section-row">
+            <button id="resetCroc" class="primary">새 게임</button>
+            <div id="crocMsg" class="status-msg">아래 이빨을 눌러보세요.</div>
+          </div>
+          <div id="crocTeeth" class="croc-grid" aria-label="croc teeth"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/croc.js"></script>
+    <script>
+      initCrocPage();
+    </script>
+  </body>
+</html>

@@ -621,6 +621,70 @@ button.ghost {
   margin-top: 10px;
 }
 
+.sudoku-board {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: 4px;
+  max-width: 620px;
+}
+
+.sudoku-cell {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 2px solid var(--stroke);
+  border-radius: 8px;
+  text-align: center;
+  font-family: var(--font-display);
+  font-size: clamp(20px, 2.5vw, 30px);
+  color: #4f4235;
+  background: #fffdf8;
+}
+
+.sudoku-cell.given {
+  background: #f3e6d7;
+  color: #2f6a54;
+}
+
+.sudoku-cell.thick-r {
+  margin-right: 8px;
+}
+
+.sudoku-cell.thick-b {
+  margin-bottom: 8px;
+}
+
+.croc-grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 560px;
+}
+
+.tooth-btn {
+  min-height: 58px;
+  border: 2px solid #f2cc97;
+  background: linear-gradient(180deg, #fff6e6, #f6d9b0);
+  color: #7a5b34;
+  font-family: var(--font-display);
+  font-size: 22px;
+  border-radius: 14px;
+  box-shadow: 0 5px 0 #cc9a5d, 0 8px 12px rgba(83, 58, 31, 0.2);
+}
+
+.tooth-btn.safe {
+  border-color: #a8e4c2;
+  background: linear-gradient(180deg, #effff7, #ccf1de);
+  color: #397259;
+}
+
+.tooth-btn.trap {
+  border-color: #ef9fb6;
+  background: linear-gradient(180deg, #ffeef4, #f4c3d2);
+  color: #a34a68;
+}
+
 .error,
 .ok {
   margin-top: 10px;

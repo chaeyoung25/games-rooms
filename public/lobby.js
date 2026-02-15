@@ -40,9 +40,13 @@ window.initLobbyPage = async function initLobbyPage() {
       const game = card.dataset.game;
       if (game === "bingo") {
         setMsg("Bingo Room으로 이동합니다.", "ok");
-        setTimeout(() => {
-          location.href = "/bingo";
-        }, 120);
+        setTimeout(() => (location.href = "/bingo"), 120);
+      } else if (game === "sudoku") {
+        setMsg("Sudoku로 이동합니다.", "ok");
+        setTimeout(() => (location.href = "/sudoku"), 120);
+      } else if (game === "croc") {
+        setMsg("악어이빨 누르기로 이동합니다.", "ok");
+        setTimeout(() => (location.href = "/croc"), 120);
       } else {
         setMsg("이 게임은 준비중입니다. 카드 추가 후 라우트만 연결하면 바로 확장됩니다.", "muted");
       }
