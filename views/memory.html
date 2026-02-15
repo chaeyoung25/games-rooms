@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Games Room - Memory</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body class="page-lobby">
+    <div class="bg" aria-hidden="true"></div>
+    <div class="pet pet-left" aria-hidden="true"></div>
+    <div class="pet pet-left2" aria-hidden="true"></div>
+    <div class="pet pet-center" aria-hidden="true"></div>
+    <div class="pet pet-right" aria-hidden="true"></div>
+    <div class="pet pet-right2" aria-hidden="true"></div>
+    <div class="emoji-cloud" aria-hidden="true">
+      <span class="emo emo-tv"></span>
+      <span class="emo emo-pad"></span>
+      <span class="emo emo-switch"></span>
+      <span class="emo emo-arcade"></span>
+    </div>
+
+    <div class="wrap">
+      <div class="topbar">
+        <div class="brand">
+          <div class="mascot" aria-hidden="true"></div>
+          <div class="brand-text">
+            <h1><span class="spark" aria-hidden="true">ARCADE</span> GAMES ROOM</h1>
+            <div class="tag">메모리 게임: 같은 국기 카드 2장을 찾아보세요</div>
+          </div>
+        </div>
+        <div class="row">
+          <a class="pill" href="/lobby">게임 목록</a>
+          <span class="pill">접속: <b id="me"></b></span>
+          <button id="logout" class="ghost">로그아웃</button>
+        </div>
+      </div>
+
+      <div class="card room-main">
+        <div class="inner">
+          <div class="row">
+            <button id="createMemory" class="primary">메모리방 만들기</button>
+            <input id="memoryCode" placeholder="방 코드 입력 (예: A7K9Q2)" />
+            <button id="joinMemory" class="good">참가</button>
+            <button id="leaveMemory" class="ghost">나가기</button>
+            <label for="cardCount" class="muted">카드 수</label>
+            <select id="cardCount">
+              <option value="20">20장</option>
+              <option value="30">30장</option>
+              <option value="40" selected>40장</option>
+              <option value="50">50장</option>
+              <option value="60">60장</option>
+            </select>
+            <button id="startMemory" class="primary" style="display: none">게임 시작</button>
+          </div>
+          <div id="memoryMsg" class="status-msg"></div>
+        </div>
+      </div>
+
+      <div class="room-layout">
+        <section class="room-stage">
+          <div class="card">
+            <div class="inner">
+              <div id="memoryTurn" class="banner">방을 만들거나 참가하세요.</div>
+              <div id="memoryBoard" class="memory-grid" aria-label="memory board"></div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="room-side">
+          <div class="card side-card">
+            <div class="inner">
+              <h2>점수판</h2>
+              <div class="muted">최대 8명 / 순서대로 2장 선택</div>
+              <div id="memoryPlayers" class="players"></div>
+            </div>
+          </div>
+        </aside>
+      </div>
+    </div>
+
+    <script src="/static/memory.js"></script>
+    <script>
+      initMemoryPage();
+    </script>
+  </body>
+</html>

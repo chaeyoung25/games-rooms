@@ -25,7 +25,7 @@
           <div class="mascot" aria-hidden="true"></div>
           <div class="brand-text">
             <h1><span class="spark" aria-hidden="true">ARCADE</span> GAMES ROOM</h1>
-            <div class="tag">Sudoku: 5x5~9x9 퍼즐 + 컴퓨터 대전</div>
+            <div class="tag">Sudoku: 5x5~9x9 퍼즐을 풀고 기록을 남기세요</div>
           </div>
         </div>
         <div class="row">
@@ -46,15 +46,12 @@
               <option value="8">8 x 8</option>
               <option value="9" selected>9 x 9</option>
             </select>
-            <label class="muted inline-check" for="sudokuBotMode">
-              <input id="sudokuBotMode" type="checkbox" checked />
-              컴퓨터 대전
-            </label>
+            <span class="pill">기록 시간 <b id="sudokuElapsed">00:00</b></span>
+            <span class="pill">최고 기록 <b id="sudokuBest">-</b></span>
             <button id="newSudoku" class="primary">새 퍼즐</button>
             <button id="checkSudoku" class="good">정답 확인</button>
           </div>
           <div class="row section-row">
-            <div id="sudokuBotMsg" class="status-msg muted"></div>
             <div id="sudokuMsg" class="status-msg"></div>
           </div>
           <div id="sudokuBoard" class="sudoku-board" aria-label="sudoku board"></div>

@@ -173,43 +173,25 @@ window.initRoomPage = async function initRoomPage() {
   roomState = join.data.room;
   prevLastNumber = roomState.lastNumber;
   buildBoard(board);
+  const boardCells = Array.from($("board").querySelectorAll(".cell"));
 
   function playerNameById(room, userId) {
     const found = room.players.find((p) => p.userId === userId);
     return found ? found.username : "알 수 없음";
   }
 
-  function remainingNumbers(room) {
-    const max = room.size * room.size;
-    const called = new Set(room.calledNumbers || []);
-    const out = [];
-    for (let n = 1; n <= max; n++) {
-      if (!called.has(n)) out.push(n);
+  async function requestDraw(selected) {
+    const r = await apiJson(`/api/rooms/${encodeURIComponent(code)}/draw`, {
+      method: "POST",
+      body: { number: selected },
+    });
+    if (!r.ok || !r.data?.ok) {
+      const err = r.data?.error || "unknown";
+      if (err === "not_your_turn") alert("아직 내 차례가 아닙니다.");
+      else if (err === "invalid_number") alert("선택 가능한 번호를 골라주세요.");
+      else if (err === "number_already_called") alert("이미 뽑힌 번호입니다. 다른 번호를 고르세요.");
+      else alert("번호 뽑기 실패");
     }
-    return out;
-  }
-
-  function renderPickNumbers(room) {
-    const select = $("pickNumber");
-    const prev = Number(select.value);
-    const left = remainingNumbers(room);
-    select.innerHTML = "";
-    for (const n of left) {
-      const opt = document.createElement("option");
-      opt.value = String(n);
-      opt.textContent = String(n);
-      select.append(opt);
-    }
-    if (left.length === 0) {
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = "-";
-      select.append(opt);
-      select.value = "";
-      return;
-    }
-    if (left.includes(prev)) select.value = String(prev);
-    else select.value = String(left[0]);
   }
 
   function updateTurnCountdown(room) {
@@ -269,7 +251,6 @@ window.initRoomPage = async function initRoomPage() {
 
     renderPlayers(room);
     updateBoardMarks(board, room);
-    renderPickNumbers(room);
     renderBanner(me, room);
     renderTurnNotice(room);
     updateTurnCountdown(room);
@@ -284,8 +265,12 @@ window.initRoomPage = async function initRoomPage() {
     $("drawTimeout").disabled = room.status !== "lobby";
 
     const canDraw = room.status === "playing" && room.turnUserId === me.userId;
-    $("draw").disabled = !canDraw;
-    $("pickNumber").disabled = !canDraw;
+    const called = new Set(room.calledNumbers || []);
+    for (const cell of boardCells) {
+      const n = Number(cell.dataset.num);
+      const selectable = canDraw && !called.has(n);
+      cell.classList.toggle("selectable", selectable);
+    }
   }
 
   $("start").addEventListener("click", async () => {
@@ -301,20 +286,16 @@ window.initRoomPage = async function initRoomPage() {
     }
   });
 
-  $("draw").addEventListener("click", async () => {
-    const selected = Number($("pickNumber").value);
-    const r = await apiJson(`/api/rooms/${encodeURIComponent(code)}/draw`, {
-      method: "POST",
-      body: { number: selected },
+  for (const cell of boardCells) {
+    cell.addEventListener("click", async () => {
+      if (!roomState) return;
+      if (!(roomState.status === "playing" && roomState.turnUserId === me.userId)) return;
+      const n = Number(cell.dataset.num);
+      if (!Number.isInteger(n)) return;
+      if (new Set(roomState.calledNumbers || []).has(n)) return;
+      await requestDraw(n);
     });
-    if (!r.ok || !r.data?.ok) {
-      const err = r.data?.error || "unknown";
-      if (err === "not_your_turn") alert("아직 내 차례가 아닙니다.");
-      else if (err === "invalid_number") alert("선택 가능한 번호를 골라주세요.");
-      else if (err === "number_already_called") alert("이미 뽑힌 번호입니다. 다른 번호를 고르세요.");
-      else alert("번호 뽑기 실패");
-    }
-  });
+  }
 
   applyState(roomState);
 

@@ -47,14 +47,6 @@ function shuffled(arr) {
   return out;
 }
 
-function flatToGrid(flat, size) {
-  const grid = [];
-  for (let r = 0; r < size; r++) {
-    grid.push(flat.slice(r * size, (r + 1) * size));
-  }
-  return grid;
-}
-
 function gridToFlat(grid) {
   return grid.flat();
 }
@@ -139,6 +131,13 @@ function readValues(boardEl) {
   return Array.from(boardEl.querySelectorAll("input.sudoku-cell")).map((cell) => String(cell.value || "").trim());
 }
 
+function formatElapsed(ms) {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const min = String(Math.floor(totalSec / 60)).padStart(2, "0");
+  const sec = String(totalSec % 60).padStart(2, "0");
+  return `${min}:${sec}`;
+}
+
 window.initSudokuPage = async function initSudokuPage() {
   const meRes = await apiJson("/api/me");
   if (!meRes.data?.user) {
@@ -155,86 +154,65 @@ window.initSudokuPage = async function initSudokuPage() {
 
   const boardEl = document.getElementById("sudokuBoard");
   const msgEl = document.getElementById("sudokuMsg");
-  const botMsgEl = document.getElementById("sudokuBotMsg");
   const sizeEl = document.getElementById("sudokuSize");
-  const botModeEl = document.getElementById("sudokuBotMode");
+  const elapsedEl = document.getElementById("sudokuElapsed");
+  const bestEl = document.getElementById("sudokuBest");
 
   let current = buildPuzzle(9);
-  let givenMask = new Set();
-  let botTimer = null;
   let gameOver = false;
+  let startedAt = 0;
+  let timer = null;
+
+  function bestKey() {
+    return `sudoku_best_${current.size}`;
+  }
+
+  function readBest() {
+    const raw = localStorage.getItem(bestKey());
+    const v = Number(raw);
+    if (!Number.isFinite(v) || v <= 0) return null;
+    return v;
+  }
+
+  function renderBest() {
+    const best = readBest();
+    bestEl.textContent = best == null ? "-" : formatElapsed(best);
+  }
 
   function setMainMsg(text, kind = "muted") {
     msgEl.textContent = text;
     msgEl.className = `status-msg ${kind}`.trim();
   }
 
-  function setBotMsg(text, kind = "muted") {
-    botMsgEl.textContent = text;
-    botMsgEl.className = `status-msg ${kind}`.trim();
-  }
-
-  function stopBot() {
-    if (botTimer) {
-      clearInterval(botTimer);
-      botTimer = null;
+  function stopTimer() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
     }
   }
 
-  function allSolved() {
-    const values = readValues(boardEl);
-    if (values.some((v) => !v)) return false;
-    return values.join("") === current.solution;
+  function startTimer() {
+    stopTimer();
+    startedAt = Date.now();
+    elapsedEl.textContent = "00:00";
+    timer = setInterval(() => {
+      elapsedEl.textContent = formatElapsed(Date.now() - startedAt);
+    }, 250);
   }
 
-  function finishAsPlayerWin() {
-    gameOver = true;
-    stopBot();
-    setMainMsg("정답입니다! 축하합니다.", "ok");
-    setBotMsg("컴퓨터보다 먼저 완성했습니다.", "ok");
-  }
-
-  function finishAsBotWin() {
-    gameOver = true;
-    stopBot();
-    setMainMsg("컴퓨터가 먼저 완성했습니다.", "error");
-    setBotMsg("새 퍼즐로 다시 도전해보세요.", "error");
-  }
-
-  function botMove() {
-    if (gameOver || !botModeEl.checked) return;
-    const cells = Array.from(boardEl.querySelectorAll("input.sudoku-cell"));
-    const candidates = [];
-    for (let i = 0; i < cells.length; i++) {
-      const cell = cells[i];
-      if (givenMask.has(i)) continue;
-      if (cell.disabled) continue;
-      if (cell.value) continue;
-      candidates.push({ i, cell });
-    }
-
-    if (candidates.length === 0) {
-      if (allSolved()) finishAsBotWin();
-      return;
-    }
-
-    const picked = candidates[Math.floor(Math.random() * candidates.length)];
-    const answer = current.solution[picked.i];
-    picked.cell.value = answer;
-    picked.cell.disabled = true;
-    picked.cell.classList.add("bot-fill");
-    if (allSolved()) finishAsBotWin();
-  }
-
-  function maybeStartBot() {
-    stopBot();
+  function finishGameFromSolved() {
     if (gameOver) return;
-    if (!botModeEl.checked) {
-      setBotMsg("컴퓨터 대전 OFF", "muted");
-      return;
+    gameOver = true;
+    stopTimer();
+    const elapsedMs = Date.now() - startedAt;
+    const prev = readBest();
+    if (prev == null || elapsedMs < prev) {
+      localStorage.setItem(bestKey(), String(elapsedMs));
+      setMainMsg(`정답입니다! 기록 ${formatElapsed(elapsedMs)} (최고 기록 갱신)`, "ok");
+    } else {
+      setMainMsg(`정답입니다! 기록 ${formatElapsed(elapsedMs)}`, "ok");
     }
-    setBotMsg("컴퓨터가 1.6초마다 한 칸씩 풉니다.", "muted");
-    botTimer = setInterval(botMove, 1600);
+    renderBest();
   }
 
   function render() {
@@ -245,7 +223,6 @@ window.initSudokuPage = async function initSudokuPage() {
 
     const puzzle = current.puzzle;
     const block = current.useClassicBlocks ? 3 : 0;
-    givenMask = new Set();
 
     for (let r = 0; r < size; r++) {
       for (let c = 0; c < size; c++) {
@@ -263,8 +240,6 @@ window.initSudokuPage = async function initSudokuPage() {
         input.value = given ? puzzle[idx] : "";
         input.disabled = given;
 
-        if (given) givenMask.add(idx);
-
         input.addEventListener("input", () => {
           const raw = input.value.replace(/\D/g, "");
           if (!raw) {
@@ -273,7 +248,6 @@ window.initSudokuPage = async function initSudokuPage() {
           }
           const n = Number(raw[0]);
           input.value = n >= 1 && n <= size ? String(n) : "";
-          if (!gameOver && allSolved()) finishAsPlayerWin();
         });
 
         boardEl.append(input);
@@ -281,8 +255,9 @@ window.initSudokuPage = async function initSudokuPage() {
     }
 
     gameOver = false;
-    setMainMsg("빈 칸을 채운 뒤 정답 확인을 눌러보세요.", "muted");
-    maybeStartBot();
+    setMainMsg("혼자 풀기 모드: 완성 시간 기록에 도전하세요.", "muted");
+    renderBest();
+    startTimer();
   }
 
   function newPuzzle() {
@@ -297,10 +272,6 @@ window.initSudokuPage = async function initSudokuPage() {
     newPuzzle();
   });
 
-  botModeEl.addEventListener("change", () => {
-    maybeStartBot();
-  });
-
   document.getElementById("checkSudoku").addEventListener("click", () => {
     const values = readValues(boardEl);
     if (values.some((v) => !v)) {
@@ -309,7 +280,7 @@ window.initSudokuPage = async function initSudokuPage() {
     }
 
     if (values.join("") === current.solution) {
-      finishAsPlayerWin();
+      finishGameFromSolved();
       return;
     }
 
