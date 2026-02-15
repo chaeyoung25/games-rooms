@@ -559,6 +559,11 @@ async function main() {
       await sendFile(res, path.join(VIEWS_DIR, "lobby.html"));
       return;
     }
+    if (req.method === "GET" && pathname === "/bingo") {
+      if (!requireAuthPage(req, res)) return;
+      await sendFile(res, path.join(VIEWS_DIR, "bingo.html"));
+      return;
+    }
     if (req.method === "GET" && pathname.startsWith("/room/")) {
       if (!requireAuthPage(req, res)) return;
       await sendFile(res, path.join(VIEWS_DIR, "room.html"));

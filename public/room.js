@@ -147,7 +147,7 @@ window.initRoomPage = async function initRoomPage() {
 
   $("leave").addEventListener("click", async () => {
     await apiJson(`/api/rooms/${encodeURIComponent(code)}/leave`, { method: "POST" });
-    location.href = "/lobby";
+    location.href = "/bingo";
   });
 
   let board = null;

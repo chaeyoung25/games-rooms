@@ -25,48 +25,12 @@
           <div class="mascot" aria-hidden="true"></div>
           <div class="brand-text">
             <h1><span class="spark" aria-hidden="true">ARCADE</span> GAMES ROOM</h1>
-            <div class="tag">한 방 최대 8명, 보드는 5x5~10x10</div>
+            <div class="tag">플레이할 게임을 선택하세요</div>
           </div>
         </div>
         <div class="row">
           <span class="pill">접속: <b id="me"></b></span>
           <button id="logout" class="ghost">로그아웃</button>
-        </div>
-      </div>
-
-      <div class="grid2">
-        <div class="card">
-          <div class="inner">
-            <h2>방 만들기</h2>
-            <div class="field">
-              <label for="size">빙고 크기</label>
-              <select id="size">
-                <option value="5">5 x 5</option>
-                <option value="6">6 x 6</option>
-                <option value="7">7 x 7</option>
-                <option value="8">8 x 8</option>
-                <option value="9">9 x 9</option>
-                <option value="10">10 x 10</option>
-              </select>
-            </div>
-            <div class="row">
-              <button id="create" class="primary">방 만들기</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="inner">
-            <h2>방 참가</h2>
-            <div class="field">
-              <label for="code">방 코드</label>
-              <input id="code" placeholder="예: A7K9Q2" />
-            </div>
-            <div class="row">
-              <button id="join" class="good">참가하기</button>
-            </div>
-            <div id="msg"></div>
-          </div>
         </div>
       </div>
 
@@ -80,7 +44,7 @@
             <div class="show-thumb" aria-hidden="true"></div>
             <div class="show-body">
               <h3>Bingo Room</h3>
-              <p>현재 플레이 가능: 방 생성/참가/멀티 빙고</p>
+              <p>플레이 가능: 멀티 빙고 방 생성/참가</p>
             </div>
           </article>
           <article class="show-card variant-sun game-card" data-game="slot-2">
@@ -105,6 +69,7 @@
             </div>
           </article>
         </div>
+        <div id="msg" class="status-msg"></div>
       </section>
     </div>
 

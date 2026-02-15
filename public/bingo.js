@@ -19,7 +19,7 @@ function setMsg(text, kind = "") {
   el.className = kind;
 }
 
-window.initLobbyPage = async function initLobbyPage() {
+window.initBingoLobbyPage = async function initBingoLobbyPage() {
   const me = await apiJson("/api/me");
   if (!me.data?.user) {
     location.href = "/login";
@@ -32,20 +32,24 @@ window.initLobbyPage = async function initLobbyPage() {
     location.href = "/login";
   });
 
-  const cards = Array.from(document.querySelectorAll(".game-card"));
-  for (const card of cards) {
-    card.addEventListener("click", () => {
-      cards.forEach((c) => c.classList.remove("active"));
-      card.classList.add("active");
-      const game = card.dataset.game;
-      if (game === "bingo") {
-        setMsg("Bingo Room으로 이동합니다.", "ok");
-        setTimeout(() => {
-          location.href = "/bingo";
-        }, 120);
-      } else {
-        setMsg("이 게임은 준비중입니다. 카드 추가 후 라우트만 연결하면 바로 확장됩니다.", "muted");
-      }
-    });
-  }
+  $("create").addEventListener("click", async () => {
+    setMsg("", "");
+    const size = Number($("size").value);
+    const r = await apiJson("/api/rooms", { method: "POST", body: { size } });
+    if (!r.ok || !r.data?.ok) {
+      setMsg("방 만들기 실패. 다시 시도해주세요.", "error");
+      return;
+    }
+    location.href = `/room/${r.data.code}`;
+  });
+
+  $("join").addEventListener("click", () => {
+    setMsg("", "");
+    const code = String($("code").value || "").trim().toUpperCase();
+    if (!code) {
+      setMsg("방 코드를 입력해주세요.", "error");
+      return;
+    }
+    location.href = `/room/${encodeURIComponent(code)}`;
+  });
 };
