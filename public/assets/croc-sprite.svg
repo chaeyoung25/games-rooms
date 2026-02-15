@@ -1,0 +1,112 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <defs>
+    <linearGradient id="bodyG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#49d35d"/>
+      <stop offset="100%" stop-color="#1f9f36"/>
+    </linearGradient>
+    <linearGradient id="mouthG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff646b"/>
+      <stop offset="100%" stop-color="#c51c2a"/>
+    </linearGradient>
+    <linearGradient id="teethG" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#fffefc"/>
+      <stop offset="100%" stop-color="#f0dfc4"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#0d5b20" flood-opacity="0.3"/>
+    </filter>
+    <g id="eye">
+      <ellipse cx="0" cy="0" rx="24" ry="18" fill="#eaf6ff" stroke="#207d34" stroke-width="3"/>
+      <circle cx="4" cy="2" r="9" fill="#c7592f"/>
+      <circle cx="6" cy="3" r="5" fill="#6c2518"/>
+      <circle cx="2" cy="-1" r="2.5" fill="#fff3dd"/>
+    </g>
+    <g id="topTeeth">
+      <path d="M0 0 L16 0 L8 18 Z" fill="url(#teethG)" stroke="#ddcca8" stroke-width="1"/>
+    </g>
+    <g id="bottomTeeth">
+      <path d="M8 0 L0 18 L16 18 Z" fill="url(#teethG)" stroke="#ddcca8" stroke-width="1"/>
+    </g>
+  </defs>
+
+  <!-- OPEN STATE (left) -->
+  <g transform="translate(0,0)" filter="url(#shadow)">
+    <rect x="36" y="300" width="490" height="206" rx="110" fill="url(#bodyG)" stroke="#1f7c33" stroke-width="4"/>
+    <rect x="72" y="325" width="426" height="146" rx="74" fill="url(#mouthG)"/>
+
+    <rect x="98" y="92" width="470" height="172" rx="90" fill="url(#bodyG)" stroke="#1f7c33" stroke-width="4" transform="rotate(-7 98 92)"/>
+    <rect x="118" y="152" width="430" height="40" rx="20" fill="url(#mouthG)" transform="rotate(-7 118 152)"/>
+
+    <use href="#eye" x="174" y="164" transform="rotate(-7 174 164)"/>
+    <use href="#eye" x="270" y="150" transform="rotate(-7 270 150)"/>
+
+    <ellipse cx="505" cy="140" rx="16" ry="11" fill="#23953a"/>
+    <ellipse cx="535" cy="136" rx="16" ry="11" fill="#23953a"/>
+
+    <g transform="translate(108,185) rotate(-7)">
+      <use href="#topTeeth" x="0" y="0"/>
+      <use href="#topTeeth" x="24" y="-1"/>
+      <use href="#topTeeth" x="48" y="-2"/>
+      <use href="#topTeeth" x="72" y="-2"/>
+      <use href="#topTeeth" x="96" y="-3"/>
+      <use href="#topTeeth" x="120" y="-3"/>
+      <use href="#topTeeth" x="144" y="-3"/>
+      <use href="#topTeeth" x="168" y="-4"/>
+      <use href="#topTeeth" x="192" y="-4"/>
+      <use href="#topTeeth" x="216" y="-4"/>
+      <use href="#topTeeth" x="240" y="-5"/>
+      <use href="#topTeeth" x="264" y="-5"/>
+      <use href="#topTeeth" x="288" y="-5"/>
+      <use href="#topTeeth" x="312" y="-6"/>
+      <use href="#topTeeth" x="336" y="-6"/>
+    </g>
+
+    <g transform="translate(120,343)">
+      <use href="#bottomTeeth" x="0" y="0"/>
+      <use href="#bottomTeeth" x="24" y="1"/>
+      <use href="#bottomTeeth" x="48" y="2"/>
+      <use href="#bottomTeeth" x="72" y="3"/>
+      <use href="#bottomTeeth" x="96" y="4"/>
+      <use href="#bottomTeeth" x="120" y="5"/>
+      <use href="#bottomTeeth" x="144" y="6"/>
+      <use href="#bottomTeeth" x="168" y="7"/>
+      <use href="#bottomTeeth" x="192" y="8"/>
+      <use href="#bottomTeeth" x="216" y="8"/>
+      <use href="#bottomTeeth" x="240" y="7"/>
+      <use href="#bottomTeeth" x="264" y="6"/>
+      <use href="#bottomTeeth" x="288" y="5"/>
+      <use href="#bottomTeeth" x="312" y="4"/>
+      <use href="#bottomTeeth" x="336" y="3"/>
+      <use href="#bottomTeeth" x="360" y="2"/>
+    </g>
+
+    <rect x="6" y="312" width="96" height="72" rx="34" fill="url(#bodyG)" stroke="#1f7c33" stroke-width="4"/>
+    <rect x="30" y="454" width="132" height="70" rx="24" fill="url(#bodyG)" stroke="#1f7c33" stroke-width="4"/>
+    <circle cx="57" cy="522" r="10" fill="#f4d33f"/>
+    <circle cx="84" cy="521" r="10" fill="#f4d33f"/>
+    <circle cx="111" cy="520" r="10" fill="#f4d33f"/>
+    <circle cx="138" cy="519" r="10" fill="#f4d33f"/>
+  </g>
+
+  <!-- CLOSED STATE (right) -->
+  <g transform="translate(600,0)" filter="url(#shadow)">
+    <rect x="40" y="272" width="488" height="216" rx="112" fill="url(#bodyG)" stroke="#1f7c33" stroke-width="4"/>
+    <rect x="68" y="318" width="436" height="56" rx="26" fill="url(#mouthG)"/>
+
+    <rect x="88" y="122" width="476" height="182" rx="92" fill="url(#bodyG)" stroke="#1f7c33" stroke-width="4" transform="rotate(-4 88 122)"/>
+    <rect x="112" y="264" width="420" height="34" rx="18" fill="url(#mouthG)" transform="rotate(-4 112 264)"/>
+
+    <use href="#eye" x="194" y="188" transform="rotate(-4 194 188)"/>
+    <use href="#eye" x="294" y="178" transform="rotate(-4 294 178)"/>
+
+    <ellipse cx="510" cy="190" rx="16" ry="11" fill="#23953a"/>
+    <ellipse cx="540" cy="188" rx="16" ry="11" fill="#23953a"/>
+
+    <rect x="8" y="312" width="98" height="72" rx="34" fill="url(#bodyG)" stroke="#1f7c33" stroke-width="4"/>
+    <rect x="32" y="454" width="132" height="70" rx="24" fill="url(#bodyG)" stroke="#1f7c33" stroke-width="4"/>
+    <circle cx="59" cy="522" r="10" fill="#f4d33f"/>
+    <circle cx="86" cy="521" r="10" fill="#f4d33f"/>
+    <circle cx="113" cy="520" r="10" fill="#f4d33f"/>
+    <circle cx="140" cy="519" r="10" fill="#f4d33f"/>
+  </g>
+</svg>

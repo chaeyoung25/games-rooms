@@ -1440,3 +1440,143 @@ body.celebrate .banner.good {
     transition: none !important;
   }
 }
+
+/* Croc Sprite Redesign */
+.croc-mouth {
+  position: relative;
+  width: min(100%, 760px);
+  aspect-ratio: 1 / 1;
+  margin: 14px auto 8px;
+  border-radius: 20px;
+  background: #f2f0e8 url("/static/assets/croc-sprite.svg") no-repeat 0 0 / 200% 100%;
+  box-shadow: 0 12px 22px rgba(45, 62, 36, 0.2);
+  overflow: hidden;
+  transition: background-position 260ms ease-in-out;
+}
+
+.croc-mouth.closed {
+  background-position: 100% 0;
+}
+
+#teeth-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+}
+
+#teethTop,
+#teethBottom {
+  --tooth-count: 20;
+  position: absolute;
+  left: 50%;
+  width: clamp(260px, 66%, 460px);
+  display: grid;
+  grid-template-columns: repeat(var(--tooth-count), minmax(0, 1fr));
+  gap: 4px;
+  transform-origin: center;
+}
+
+#teethTop {
+  top: 240px;
+  transform: translateX(-50%) rotate(-6deg);
+}
+
+#teethBottom {
+  top: 320px;
+  transform: translateX(-50%) rotate(-2deg);
+}
+
+#teeth-container .croc-tooth {
+  min-height: 28px;
+  border-radius: 999px 999px 30% 30%;
+  border: 1.5px solid #d9ceb8;
+  background:
+    radial-gradient(80% 56% at 50% 24%, rgba(255, 255, 255, 0.94), transparent 62%),
+    linear-gradient(180deg, #fffdf9, #f0e0c8);
+  box-shadow: 0 2px 0 #c8b59a, 0 4px 8px rgba(78, 54, 28, 0.18);
+  color: transparent;
+  text-shadow: none;
+  font-size: 0;
+  padding: 0;
+}
+
+#teethTop .croc-tooth {
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+#teethBottom .croc-tooth {
+  clip-path: polygon(50% 0, 0 100%, 100% 100%);
+}
+
+#teeth-container .croc-tooth:disabled {
+  opacity: 0.95;
+}
+
+#teeth-container .croc-tooth::after {
+  content: attr(data-tooth);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 9px;
+  font-weight: 800;
+  color: #7b6245;
+  opacity: 0;
+}
+
+#teeth-container .croc-tooth:not(:disabled):hover::after,
+#teeth-container .croc-tooth.picked::after,
+#teeth-container .croc-tooth.trap::after {
+  opacity: 1;
+}
+
+#teeth-container .croc-tooth.picked {
+  border-color: #9dd5b4;
+  background: linear-gradient(180deg, #f3fff8, #d9f1e5);
+  box-shadow: 0 2px 0 #90bfa8, 0 3px 6px rgba(45, 113, 77, 0.2);
+}
+
+#teeth-container .croc-tooth.trap {
+  border-color: #ef9fb6;
+  background: linear-gradient(180deg, #ffeef4, #f4c3d2);
+  box-shadow: 0 2px 0 #d88ea6, 0 3px 6px rgba(154, 62, 95, 0.22);
+}
+
+.croc-hint {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.croc-hint #toothSummary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 2px solid #ebb2ae;
+  background: linear-gradient(180deg, #fff1ef, #ffdedd);
+  color: #8a4a4a;
+  font-weight: 800;
+}
+
+@media (max-width: 920px) {
+  #teethTop {
+    top: 40%;
+  }
+
+  #teethBottom {
+    top: 54%;
+  }
+
+  #teethTop,
+  #teethBottom {
+    width: clamp(220px, 70%, 380px);
+    gap: 3px;
+  }
+
+  #teeth-container .croc-tooth {
+    min-height: 24px;
+  }
+}

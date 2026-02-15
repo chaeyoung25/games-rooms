@@ -134,8 +134,8 @@ window.initCrocPage = async function initCrocPage() {
 
     const perJaw = Number(state.toothCountPerJaw || 20);
     const maxTooth = perJaw * 2;
-    top.style.gridTemplateColumns = `repeat(${perJaw}, minmax(40px, 1fr))`;
-    bottom.style.gridTemplateColumns = `repeat(${perJaw}, minmax(40px, 1fr))`;
+    top.style.setProperty("--tooth-count", String(perJaw));
+    bottom.style.setProperty("--tooth-count", String(perJaw));
 
     for (let tooth = 1; tooth <= maxTooth; tooth++) {
       const btn = document.createElement("button");
