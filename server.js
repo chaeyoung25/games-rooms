@@ -370,6 +370,7 @@ function crocRoomPublicState(room) {
       alive: Boolean(p.alive),
     })),
     selectedTeeth: Array.from(room.selectedTeeth).sort((a, b) => a - b),
+    toothCountPerJaw: room.toothCountPerJaw,
     turnUserId: room.turnUserId ?? null,
     lastPickedTooth: room.lastPickedTooth ?? null,
     lastPickerUserId: room.lastPickerUserId ?? null,
@@ -824,6 +825,7 @@ async function main() {
           createdAt: nowIso(),
           players: new Map(),
           selectedTeeth: new Set(),
+          toothCountPerJaw: 20,
           trapTooth: null,
           turnOrder: [],
           turnCursor: 0,
@@ -928,9 +930,20 @@ async function main() {
           sendJson(res, 409, { ok: false, error: "need_two_players" });
           return;
         }
+        const body = await readJsonBody(req);
+        if (!body.ok) {
+          sendJson(res, 400, { ok: false, error: body.error });
+          return;
+        }
+        const toothCountPerJaw = Number(body.value.toothCountPerJaw);
+        if (!Number.isInteger(toothCountPerJaw) || toothCountPerJaw < 8 || toothCountPerJaw > 20) {
+          sendJson(res, 400, { ok: false, error: "invalid_tooth_count_per_jaw" });
+          return;
+        }
         room.status = "playing";
+        room.toothCountPerJaw = toothCountPerJaw;
         room.selectedTeeth = new Set();
-        room.trapTooth = crypto.randomInt(1, 41); // 1~40
+        room.trapTooth = crypto.randomInt(1, toothCountPerJaw * 2 + 1);
         room.loserUserId = null;
         room.loserUsername = null;
         room.winnerUserId = null;
@@ -969,7 +982,8 @@ async function main() {
           return;
         }
         const tooth = Number(body.value.tooth);
-        if (!Number.isInteger(tooth) || tooth < 1 || tooth > 40) {
+        const maxTooth = room.toothCountPerJaw * 2;
+        if (!Number.isInteger(tooth) || tooth < 1 || tooth > maxTooth) {
           sendJson(res, 400, { ok: false, error: "invalid_tooth" });
           return;
         }

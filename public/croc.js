@@ -36,6 +36,39 @@ window.initCrocPage = async function initCrocPage() {
   let roomState = null;
   let roomCode = "";
   let es = null;
+  let prevEnded = false;
+
+  function playRoar() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const now = ctx.currentTime;
+
+      const osc = ctx.createOscillator();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.exponentialRampToValueAtTime(70, now + 0.9);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(0.9, now + 0.06);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.0);
+
+      const biquad = ctx.createBiquadFilter();
+      biquad.type = "lowpass";
+      biquad.frequency.setValueAtTime(1100, now);
+
+      osc.connect(biquad);
+      biquad.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 1.02);
+      osc.onended = () => ctx.close();
+    } catch {
+      // ignore audio errors
+    }
+  }
 
   function closeStream() {
     if (es) {
@@ -92,7 +125,12 @@ window.initCrocPage = async function initCrocPage() {
     const selected = new Set(state.selectedTeeth || []);
     const myTurn = state.status === "playing" && state.turnUserId === me.userId;
 
-    for (let tooth = 1; tooth <= 40; tooth++) {
+    const perJaw = Number(state.toothCountPerJaw || 20);
+    const maxTooth = perJaw * 2;
+    top.style.gridTemplateColumns = `repeat(${perJaw}, minmax(34px, 1fr))`;
+    bottom.style.gridTemplateColumns = `repeat(${perJaw}, minmax(34px, 1fr))`;
+
+    for (let tooth = 1; tooth <= maxTooth; tooth++) {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "croc-tooth";
@@ -123,7 +161,7 @@ window.initCrocPage = async function initCrocPage() {
         }
       });
 
-      if (tooth <= 20) top.append(btn);
+      if (tooth <= perJaw) top.append(btn);
       else bottom.append(btn);
     }
   }
@@ -170,13 +208,19 @@ window.initCrocPage = async function initCrocPage() {
     renderPlayers(state);
     renderTeeth(state);
     renderTurn(state);
+    const totalTeeth = Number(state.toothCountPerJaw || 20) * 2;
+    $("toothSummary").textContent = `${totalTeeth}개 이빨 중 1개는 함정`;
 
     const isHost = state.hostUserId === me.userId;
     $("startCroc").style.display = isHost ? "inline-flex" : "none";
     $("startCroc").disabled = state.status !== "lobby";
+    $("toothCount").disabled = !isHost || state.status !== "lobby";
+    if (state.status === "lobby") $("toothCount").value = String(state.toothCountPerJaw || 20);
 
     const mouthClosed = state.status === "ended" && state.loserUserId != null;
     $("crocMouth").classList.toggle("closed", mouthClosed);
+    if (mouthClosed && !prevEnded) playRoar();
+    prevEnded = mouthClosed;
   }
 
   async function joinRoom(code) {
@@ -226,17 +270,23 @@ window.initCrocPage = async function initCrocPage() {
     $("teethTop").innerHTML = "";
     $("teethBottom").innerHTML = "";
     $("crocMouth").classList.remove("closed");
+    prevEnded = false;
     renderTurn(null);
     setMsg("방에서 나왔습니다.", "ok");
   });
 
   $("startCroc").addEventListener("click", async () => {
     if (!roomCode) return;
-    const r = await apiJson(`/api/croc/rooms/${encodeURIComponent(roomCode)}/start`, { method: "POST" });
+    const toothCountPerJaw = Number($("toothCount").value);
+    const r = await apiJson(`/api/croc/rooms/${encodeURIComponent(roomCode)}/start`, {
+      method: "POST",
+      body: { toothCountPerJaw },
+    });
     if (!r.ok || !r.data?.ok) {
       const err = r.data?.error || "unknown";
       if (err === "need_two_players") setMsg("최소 2명이 필요합니다.", "error");
       else if (err === "host_only") setMsg("방장만 시작할 수 있습니다.", "error");
+      else if (err === "invalid_tooth_count_per_jaw") setMsg("이빨 수는 8~20 사이만 가능합니다.", "error");
       else setMsg("게임 시작 실패", "error");
     }
   });

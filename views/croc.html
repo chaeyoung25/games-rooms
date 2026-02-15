@@ -42,6 +42,12 @@
             <input id="crocCode" placeholder="방 코드 입력 (예: A7K9Q2)" />
             <button id="joinCroc" class="good">참가</button>
             <button id="leaveCroc" class="ghost">나가기</button>
+            <label for="toothCount" class="muted">위/아래 이빨 수</label>
+            <select id="toothCount">
+              <option value="10">10 + 10</option>
+              <option value="15">15 + 15</option>
+              <option value="20" selected>20 + 20 (총 40)</option>
+            </select>
             <button id="startCroc" class="primary" style="display: none">게임 시작</button>
           </div>
           <div id="crocMsg" class="status-msg"></div>
@@ -54,13 +60,17 @@
             <div class="inner">
               <div id="crocTurn" class="banner">방을 만들거나 참가하세요.</div>
               <div id="crocMouth" class="croc-mouth">
+                <div class="croc-face">
+                  <div class="croc-eye left"><span></span></div>
+                  <div class="croc-eye right"><span></span></div>
+                </div>
                 <div class="jaw top">
                   <div class="jaw-track">
                     <div id="teethTop" class="teeth-row"></div>
                   </div>
                 </div>
                 <div class="mouth-gap">
-                  <span>40개 이빨 중 1개는 함정</span>
+                  <span id="toothSummary">40개 이빨 중 1개는 함정</span>
                 </div>
                 <div class="jaw bottom">
                   <div class="jaw-track">

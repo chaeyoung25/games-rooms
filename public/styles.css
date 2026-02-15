@@ -688,16 +688,49 @@ button.ghost {
 .croc-mouth {
   margin-top: 12px;
   border-radius: 22px;
-  border: 2px solid #74b26f;
-  background: linear-gradient(180deg, #78cb65, #5cae52);
+  border: 2px solid #4d9d40;
+  background: linear-gradient(180deg, #57c54d, #39a331);
   padding: 12px;
-  box-shadow: 0 12px 18px rgba(27, 71, 30, 0.22);
+  box-shadow: 0 12px 18px rgba(27, 71, 30, 0.28);
+  position: relative;
+}
+
+.croc-face {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 14px 8px;
+}
+
+.croc-eye {
+  width: 46px;
+  height: 28px;
+  border-radius: 16px;
+  background: #e6f7ff;
+  border: 2px solid #3f8f34;
+  position: relative;
+}
+
+.croc-eye span {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #d43737;
+  top: 6px;
+}
+
+.croc-eye.left span {
+  right: 8px;
+}
+
+.croc-eye.right span {
+  left: 8px;
 }
 
 .jaw {
   border-radius: 16px;
-  border: 2px solid #6aa863;
-  background: linear-gradient(180deg, #78c66d, #60b157);
+  border: 2px solid #3f8f34;
+  background: linear-gradient(180deg, #63cc57, #4fa843);
   padding: 8px;
   transition: transform 220ms ease;
 }
@@ -725,8 +758,8 @@ button.ghost {
 .mouth-gap {
   margin: 10px 0;
   border-radius: 14px;
-  border: 2px solid #d6807b;
-  background: linear-gradient(180deg, #f05f59, #d94742);
+  border: 2px solid #c95555;
+  background: radial-gradient(circle at 50% 30%, #ea6666, #c73939 70%);
   min-height: 64px;
   display: grid;
   place-items: center;
@@ -737,8 +770,8 @@ button.ghost {
 .croc-tooth {
   min-height: 44px;
   border-radius: 10px;
-  border: 2px solid #f0d6af;
-  background: linear-gradient(180deg, #fff9ef, #f5e2c4);
+  border: 2px solid #ead1ab;
+  background: linear-gradient(180deg, #fffdf8, #f4e5cd);
   color: #7b5f3b;
   font-family: var(--font-display);
   font-size: 18px;
@@ -757,11 +790,11 @@ button.ghost {
 }
 
 .croc-mouth.closed .jaw.top {
-  transform: translateY(26px);
+  transform: translateY(38px);
 }
 
 .croc-mouth.closed .jaw.bottom {
-  transform: translateY(-26px);
+  transform: translateY(-38px);
 }
 
 @media (max-width: 920px) {
@@ -814,6 +847,12 @@ button.ghost {
 #pickNumber {
   width: 110px;
   min-width: 110px;
+  height: 42px;
+}
+
+#toothCount {
+  width: 150px;
+  min-width: 150px;
   height: 42px;
 }
 
