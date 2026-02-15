@@ -52,5 +52,18 @@ window.initLobbyPage = async function initLobbyPage() {
     }
     location.href = `/room/${encodeURIComponent(code)}`;
   });
-};
 
+  const cards = Array.from(document.querySelectorAll(".game-card"));
+  for (const card of cards) {
+    card.addEventListener("click", () => {
+      cards.forEach((c) => c.classList.remove("active"));
+      card.classList.add("active");
+      const game = card.dataset.game;
+      if (game === "bingo") {
+        setMsg("현재는 Bingo Room을 플레이할 수 있습니다.", "ok");
+      } else {
+        setMsg("이 게임은 준비중입니다. 카드 추가 후 라우트만 연결하면 바로 확장됩니다.", "muted");
+      }
+    });
+  }
+};

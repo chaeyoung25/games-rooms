@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Bingo Rooms - Lobby</title>
+    <title>Games Room - Lobby</title>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
   <body class="page-lobby">
@@ -24,7 +24,7 @@
         <div class="brand">
           <div class="mascot" aria-hidden="true"></div>
           <div class="brand-text">
-            <h1><span class="spark" aria-hidden="true">ARCADE</span> BINGO ROOMS</h1>
+            <h1><span class="spark" aria-hidden="true">ARCADE</span> GAMES ROOM</h1>
             <div class="tag">한 방 최대 8명, 보드는 5x5~10x10</div>
           </div>
         </div>
@@ -72,50 +72,36 @@
 
       <section class="lobby-showcase">
         <div class="showcase-head">
-          <h2>이번 판 스타일</h2>
-          <span class="pill">ARCADE PICKS</span>
+          <h2>게임 목록</h2>
+          <span class="pill">MORE GAMES SOON</span>
         </div>
         <div class="showcase-grid">
-          <article class="show-card variant-mint">
+          <article class="show-card variant-mint game-card active" data-game="bingo">
             <div class="show-thumb" aria-hidden="true"></div>
             <div class="show-body">
-              <h3>스피드 매치</h3>
-              <p>3초 턴 제한으로 빠르게 끝나는 라운드</p>
+              <h3>Bingo Room</h3>
+              <p>현재 플레이 가능: 방 생성/참가/멀티 빙고</p>
             </div>
           </article>
-          <article class="show-card variant-sun">
+          <article class="show-card variant-sun game-card" data-game="slot-2">
             <div class="show-thumb" aria-hidden="true"></div>
             <div class="show-body">
-              <h3>클래식 모드</h3>
-              <p>10초 턴 제한으로 가장 안정적인 플레이</p>
+              <h3>Game Slot 2</h3>
+              <p>다음 게임 추가 예정 (라우트 연결만 하면 확장 가능)</p>
             </div>
           </article>
-          <article class="show-card variant-rose">
+          <article class="show-card variant-rose game-card" data-game="slot-3">
             <div class="show-thumb" aria-hidden="true"></div>
             <div class="show-body">
-              <h3>집중전</h3>
-              <p>20초 제한에서 계산하며 천천히 승부</p>
+              <h3>Game Slot 3</h3>
+              <p>신규 미니게임 카드 자리</p>
             </div>
           </article>
-          <article class="show-card variant-fox">
+          <article class="show-card variant-fox game-card" data-game="slot-4">
             <div class="show-thumb" aria-hidden="true"></div>
             <div class="show-body">
-              <h3>여우 챌린지</h3>
-              <p>5초 제한과 랜덤 분위기 연출</p>
-            </div>
-          </article>
-          <article class="show-card variant-panda">
-            <div class="show-thumb" aria-hidden="true"></div>
-            <div class="show-body">
-              <h3>판다 라운지</h3>
-              <p>느긋한 플레이를 위한 15초 모드</p>
-            </div>
-          </article>
-          <article class="show-card variant-pig">
-            <div class="show-thumb" aria-hidden="true"></div>
-            <div class="show-body">
-              <h3>핑크 아케이드</h3>
-              <p>귀여운 오브젝트 중심 하이톤 테마</p>
+              <h3>Game Slot 4</h3>
+              <p>신규 미니게임 카드 자리</p>
             </div>
           </article>
         </div>

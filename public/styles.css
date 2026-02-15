@@ -364,6 +364,20 @@ body {
   overflow: hidden;
 }
 
+.game-card {
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.game-card:hover {
+  transform: translateY(-2px);
+}
+
+.game-card.active {
+  border-color: #9fd7ba;
+  box-shadow: 0 0 0 3px rgba(130, 216, 167, 0.28), 0 10px 18px rgba(18, 48, 38, 0.22);
+}
+
 .show-thumb {
   height: 98px;
   position: relative;

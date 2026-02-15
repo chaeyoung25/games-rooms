@@ -551,12 +551,7 @@ async function main() {
       return;
     }
     if (req.method === "GET" && pathname === "/signup") {
-      const session = getSession(req);
-      if (session) {
-        redirect(res, "/lobby");
-        return;
-      }
-      await sendFile(res, path.join(VIEWS_DIR, "signup.html"));
+      redirect(res, "/login");
       return;
     }
     if (req.method === "GET" && pathname === "/lobby") {
@@ -648,35 +643,7 @@ async function main() {
       }
 
       if (req.method === "POST" && pathname === "/api/signup") {
-        const body = await readJsonBody(req);
-        if (!body.ok) {
-          sendJson(res, 400, { ok: false, error: body.error });
-          return;
-        }
-        const username = normalizeUsername(body.value.username);
-        const password = String(body.value.password || "");
-        if (username.length < 2 || username.length > 20) {
-          sendJson(res, 400, { ok: false, error: "username_length" });
-          return;
-        }
-        if (password.length < 4 || password.length > 100) {
-          sendJson(res, 400, { ok: false, error: "password_length" });
-          return;
-        }
-        const exists = userDb.users.some((u) => u.username.toLowerCase() === username.toLowerCase());
-        if (exists) {
-          sendJson(res, 409, { ok: false, error: "username_taken" });
-          return;
-        }
-        const user = {
-          id: userDb.nextId++,
-          username,
-          passwordHash: hashPassword(password),
-          createdAt: nowIso(),
-        };
-        userDb.users.push(user);
-        await queueUserDbWrite();
-        sendJson(res, 200, { ok: true });
+        sendJson(res, 410, { ok: false, error: "signup_disabled" });
         return;
       }
 
@@ -687,14 +654,25 @@ async function main() {
           return;
         }
         const username = normalizeUsername(body.value.username);
-        const password = String(body.value.password || "");
-        const user = userDb.users.find((u) => u.username.toLowerCase() === username.toLowerCase());
-        if (!user || !verifyPassword(password, user.passwordHash)) {
-          sendJson(res, 401, { ok: false, error: "invalid_credentials" });
+        if (username.length < 2 || username.length > 20) {
+          sendJson(res, 400, { ok: false, error: "username_length" });
           return;
         }
+        let user = userDb.users.find((u) => u.username.toLowerCase() === username.toLowerCase());
+        let created = false;
+        if (!user) {
+          user = {
+            id: userDb.nextId++,
+            username,
+            passwordHash: null,
+            createdAt: nowIso(),
+          };
+          userDb.users.push(user);
+          created = true;
+          await queueUserDbWrite();
+        }
         setSession(res, { userId: user.id, username: user.username });
-        sendJson(res, 200, { ok: true });
+        sendJson(res, 200, { ok: true, created });
         return;
       }
 
