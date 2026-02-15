@@ -37,6 +37,13 @@ window.initCrocPage = async function initCrocPage() {
   let roomCode = "";
   let es = null;
   let prevEnded = false;
+  const previewState = {
+    status: "preview",
+    selectedTeeth: [],
+    toothCountPerJaw: 20,
+    turnUserId: null,
+    lastPickedTooth: null,
+  };
 
   function playRoar() {
     try {
@@ -224,6 +231,13 @@ window.initCrocPage = async function initCrocPage() {
     prevEnded = mouthClosed;
   }
 
+  function resetPreviewMouth() {
+    renderTeeth(previewState);
+    $("toothSummary").textContent = "40개 이빨 중 1개는 함정";
+    $("crocMouth").classList.remove("closed");
+    prevEnded = false;
+  }
+
   async function joinRoom(code) {
     const r = await apiJson(`/api/croc/rooms/${encodeURIComponent(code)}/join`, { method: "POST" });
     if (!r.ok || !r.data?.ok) {
@@ -268,10 +282,8 @@ window.initCrocPage = async function initCrocPage() {
     roomState = null;
     $("crocCode").value = "";
     $("crocPlayers").innerHTML = "";
-    $("teethTop").innerHTML = "";
-    $("teethBottom").innerHTML = "";
-    $("crocMouth").classList.remove("closed");
-    prevEnded = false;
+    $("startCroc").style.display = "none";
+    resetPreviewMouth();
     renderTurn(null);
     setMsg("방에서 나왔습니다.", "ok");
   });
@@ -292,6 +304,7 @@ window.initCrocPage = async function initCrocPage() {
     }
   });
 
+  resetPreviewMouth();
   renderTurn(null);
   setMsg("악어방을 만들거나 코드로 참가하세요.", "muted");
 };
