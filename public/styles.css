@@ -621,22 +621,59 @@ button.ghost {
   margin-top: 10px;
 }
 
+.inline-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.inline-check input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: #5bbd80;
+}
+
+.sudoku-toolbar {
+  align-items: center;
+}
+
+#sudokuSize {
+  width: 120px;
+  min-width: 120px;
+  height: 42px;
+}
+
+#sudokuBotMsg,
+#sudokuMsg {
+  min-height: 20px;
+}
+
 .sudoku-board {
+  --sudoku-size: 9;
   margin-top: 12px;
   display: grid;
-  grid-template-columns: repeat(9, minmax(0, 1fr));
-  gap: 4px;
-  max-width: 620px;
+  grid-template-columns: repeat(var(--sudoku-size), minmax(0, 1fr));
+  gap: clamp(2px, 0.55vw, 5px);
+  width: min(92vw, 620px);
+  max-width: 100%;
 }
 
 .sudoku-cell {
   width: 100%;
   aspect-ratio: 1;
   border: 2px solid var(--stroke);
-  border-radius: 8px;
+  border-radius: clamp(6px, 1vw, 10px);
   text-align: center;
-  font-family: var(--font-display);
-  font-size: clamp(20px, 2.5vw, 30px);
+  font-family: "Jua", "Baloo 2", sans-serif;
+  font-size: clamp(13px, calc(265px / var(--sudoku-size)), 31px);
+  line-height: 1;
+  padding: 0;
+  appearance: textfield;
+  -webkit-appearance: textfield;
+  font-variant-numeric: tabular-nums;
   color: #4f4235;
   background: #fffdf8;
 }
@@ -646,12 +683,28 @@ button.ghost {
   color: #2f6a54;
 }
 
+.sudoku-cell.bot-fill {
+  background: linear-gradient(180deg, #eefcf4, #d6f0e4);
+  color: #3f7258;
+  border-color: #a4d6bb;
+}
+
 .sudoku-cell.thick-r {
-  margin-right: 8px;
+  margin-right: clamp(4px, 1vw, 8px);
 }
 
 .sudoku-cell.thick-b {
-  margin-bottom: 8px;
+  margin-bottom: clamp(4px, 1vw, 8px);
+}
+
+@media (max-width: 680px) {
+  .sudoku-board {
+    width: min(96vw, 560px);
+  }
+
+  .sudoku-cell {
+    font-size: clamp(12px, calc(220px / var(--sudoku-size)), 23px);
+  }
 }
 
 .croc-grid {

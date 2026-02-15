@@ -9,7 +9,7 @@ async function apiJson(url, { method = "GET", body } = {}) {
   return { ok: res.ok, status: res.status, data };
 }
 
-const SUDOKU_SET = [
+const SUDOKU_9_SET = [
   {
     puzzle:
       "530070000600195000098000060800060003400803001700020006060000280000419005000080079",
@@ -34,15 +34,109 @@ function pickOne(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function getCellIndex(r, c) {
-  return r * 9 + c;
+function makeRange(n) {
+  return Array.from({ length: n }, (_, i) => i);
 }
 
-function readBoard() {
-  const out = [];
-  const cells = document.querySelectorAll("#sudokuBoard input");
-  for (const cell of cells) out.push(cell.value.trim());
+function shuffled(arr) {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
   return out;
+}
+
+function flatToGrid(flat, size) {
+  const grid = [];
+  for (let r = 0; r < size; r++) {
+    grid.push(flat.slice(r * size, (r + 1) * size));
+  }
+  return grid;
+}
+
+function gridToFlat(grid) {
+  return grid.flat();
+}
+
+function makeLatinSolution(size) {
+  const symbols = shuffled(Array.from({ length: size }, (_, i) => i + 1));
+  const rowShift = shuffled(makeRange(size));
+  const colShift = shuffled(makeRange(size));
+  const grid = [];
+  for (let r = 0; r < size; r++) {
+    const row = [];
+    for (let c = 0; c < size; c++) {
+      const v = symbols[(rowShift[r] + colShift[c]) % size];
+      row.push(v);
+    }
+    grid.push(row);
+  }
+  return grid;
+}
+
+function blankRatioBySize(size) {
+  if (size <= 5) return 0.36;
+  if (size === 6) return 0.42;
+  if (size === 7) return 0.46;
+  if (size === 8) return 0.5;
+  return 0.58;
+}
+
+function makePuzzleFromSolution(solutionGrid) {
+  const size = solutionGrid.length;
+  const flat = gridToFlat(solutionGrid);
+  const puzzle = flat.map((v) => String(v));
+  const total = size * size;
+  const targetBlanks = Math.floor(total * blankRatioBySize(size));
+
+  const rowGiven = Array.from({ length: size }, () => size);
+  const colGiven = Array.from({ length: size }, () => size);
+  const order = shuffled(makeRange(total));
+
+  let blanks = 0;
+  for (const idx of order) {
+    if (blanks >= targetBlanks) break;
+    const r = Math.floor(idx / size);
+    const c = idx % size;
+    if (rowGiven[r] <= 2 || colGiven[c] <= 2) continue;
+    puzzle[idx] = "0";
+    rowGiven[r]--;
+    colGiven[c]--;
+    blanks++;
+  }
+
+  return puzzle.join("");
+}
+
+function buildPuzzle(size) {
+  if (size === 9) {
+    const one = pickOne(SUDOKU_9_SET);
+    return {
+      size,
+      puzzle: one.puzzle,
+      solution: one.solution,
+      useClassicBlocks: true,
+    };
+  }
+
+  const solutionGrid = makeLatinSolution(size);
+  const puzzle = makePuzzleFromSolution(solutionGrid);
+  const solution = gridToFlat(solutionGrid).join("");
+  return {
+    size,
+    puzzle,
+    solution,
+    useClassicBlocks: false,
+  };
+}
+
+function getCellIndex(size, r, c) {
+  return r * size + c;
+}
+
+function readValues(boardEl) {
+  return Array.from(boardEl.querySelectorAll("input.sudoku-cell")).map((cell) => String(cell.value || "").trim());
 }
 
 window.initSudokuPage = async function initSudokuPage() {
@@ -51,6 +145,7 @@ window.initSudokuPage = async function initSudokuPage() {
     location.href = "/login";
     return;
   }
+
   document.getElementById("me").textContent = meRes.data.user.username;
 
   document.getElementById("logout").addEventListener("click", async () => {
@@ -60,60 +155,166 @@ window.initSudokuPage = async function initSudokuPage() {
 
   const boardEl = document.getElementById("sudokuBoard");
   const msgEl = document.getElementById("sudokuMsg");
-  let current = pickOne(SUDOKU_SET);
+  const botMsgEl = document.getElementById("sudokuBotMsg");
+  const sizeEl = document.getElementById("sudokuSize");
+  const botModeEl = document.getElementById("sudokuBotMode");
+
+  let current = buildPuzzle(9);
+  let givenMask = new Set();
+  let botTimer = null;
+  let gameOver = false;
+
+  function setMainMsg(text, kind = "muted") {
+    msgEl.textContent = text;
+    msgEl.className = `status-msg ${kind}`.trim();
+  }
+
+  function setBotMsg(text, kind = "muted") {
+    botMsgEl.textContent = text;
+    botMsgEl.className = `status-msg ${kind}`.trim();
+  }
+
+  function stopBot() {
+    if (botTimer) {
+      clearInterval(botTimer);
+      botTimer = null;
+    }
+  }
+
+  function allSolved() {
+    const values = readValues(boardEl);
+    if (values.some((v) => !v)) return false;
+    return values.join("") === current.solution;
+  }
+
+  function finishAsPlayerWin() {
+    gameOver = true;
+    stopBot();
+    setMainMsg("정답입니다! 축하합니다.", "ok");
+    setBotMsg("컴퓨터보다 먼저 완성했습니다.", "ok");
+  }
+
+  function finishAsBotWin() {
+    gameOver = true;
+    stopBot();
+    setMainMsg("컴퓨터가 먼저 완성했습니다.", "error");
+    setBotMsg("새 퍼즐로 다시 도전해보세요.", "error");
+  }
+
+  function botMove() {
+    if (gameOver || !botModeEl.checked) return;
+    const cells = Array.from(boardEl.querySelectorAll("input.sudoku-cell"));
+    const candidates = [];
+    for (let i = 0; i < cells.length; i++) {
+      const cell = cells[i];
+      if (givenMask.has(i)) continue;
+      if (cell.disabled) continue;
+      if (cell.value) continue;
+      candidates.push({ i, cell });
+    }
+
+    if (candidates.length === 0) {
+      if (allSolved()) finishAsBotWin();
+      return;
+    }
+
+    const picked = candidates[Math.floor(Math.random() * candidates.length)];
+    const answer = current.solution[picked.i];
+    picked.cell.value = answer;
+    picked.cell.disabled = true;
+    picked.cell.classList.add("bot-fill");
+    if (allSolved()) finishAsBotWin();
+  }
+
+  function maybeStartBot() {
+    stopBot();
+    if (gameOver) return;
+    if (!botModeEl.checked) {
+      setBotMsg("컴퓨터 대전 OFF", "muted");
+      return;
+    }
+    setBotMsg("컴퓨터가 1.6초마다 한 칸씩 풉니다.", "muted");
+    botTimer = setInterval(botMove, 1600);
+  }
 
   function render() {
+    const size = current.size;
     boardEl.innerHTML = "";
-    for (let r = 0; r < 9; r++) {
-      for (let c = 0; c < 9; c++) {
-        const idx = getCellIndex(r, c);
-        const given = current.puzzle[idx] !== "0";
+    boardEl.style.setProperty("--sudoku-size", String(size));
+    boardEl.style.gridTemplateColumns = `repeat(${size}, minmax(0, 1fr))`;
+
+    const puzzle = current.puzzle;
+    const block = current.useClassicBlocks ? 3 : 0;
+    givenMask = new Set();
+
+    for (let r = 0; r < size; r++) {
+      for (let c = 0; c < size; c++) {
+        const idx = getCellIndex(size, r, c);
+        const given = puzzle[idx] !== "0";
         const input = document.createElement("input");
         input.type = "text";
         input.inputMode = "numeric";
+        input.autocomplete = "off";
         input.maxLength = 1;
         input.className = "sudoku-cell";
         if (given) input.classList.add("given");
-        if (c % 3 === 2 && c !== 8) input.classList.add("thick-r");
-        if (r % 3 === 2 && r !== 8) input.classList.add("thick-b");
-        input.value = given ? current.puzzle[idx] : "";
+        if (block > 0 && c % block === block - 1 && c !== size - 1) input.classList.add("thick-r");
+        if (block > 0 && r % block === block - 1 && r !== size - 1) input.classList.add("thick-b");
+        input.value = given ? puzzle[idx] : "";
         input.disabled = given;
+
+        if (given) givenMask.add(idx);
+
         input.addEventListener("input", () => {
-          const v = input.value.replace(/[^1-9]/g, "");
-          input.value = v.slice(0, 1);
+          const raw = input.value.replace(/\D/g, "");
+          if (!raw) {
+            input.value = "";
+            return;
+          }
+          const n = Number(raw[0]);
+          input.value = n >= 1 && n <= size ? String(n) : "";
+          if (!gameOver && allSolved()) finishAsPlayerWin();
         });
+
         boardEl.append(input);
       }
     }
-    msgEl.textContent = "빈 칸을 채운 뒤 정답 확인을 눌러보세요.";
-    msgEl.className = "status-msg muted";
+
+    gameOver = false;
+    setMainMsg("빈 칸을 채운 뒤 정답 확인을 눌러보세요.", "muted");
+    maybeStartBot();
   }
 
-  document.getElementById("newSudoku").addEventListener("click", () => {
-    current = pickOne(SUDOKU_SET);
+  function newPuzzle() {
+    const size = Number(sizeEl.value || 9);
+    current = buildPuzzle(size);
     render();
+  }
+
+  document.getElementById("newSudoku").addEventListener("click", newPuzzle);
+
+  sizeEl.addEventListener("change", () => {
+    newPuzzle();
+  });
+
+  botModeEl.addEventListener("change", () => {
+    maybeStartBot();
   });
 
   document.getElementById("checkSudoku").addEventListener("click", () => {
-    const values = readBoard().join("");
-    if (values.includes("")) {
-      msgEl.textContent = "모든 칸을 채워주세요.";
-      msgEl.className = "status-msg error";
+    const values = readValues(boardEl);
+    if (values.some((v) => !v)) {
+      setMainMsg("모든 칸을 채워주세요.", "error");
       return;
     }
-    if (values.length !== 81) {
-      msgEl.textContent = "입력이 올바르지 않습니다.";
-      msgEl.className = "status-msg error";
+
+    if (values.join("") === current.solution) {
+      finishAsPlayerWin();
       return;
     }
-    if (values === current.solution) {
-      msgEl.textContent = "정답입니다! 축하합니다.";
-      msgEl.className = "status-msg ok";
-    } else {
-      msgEl.textContent = "아직 정답이 아니에요. 다시 확인해보세요.";
-      msgEl.className = "status-msg error";
-    }
+
+    setMainMsg("아직 정답이 아니에요. 다시 확인해보세요.", "error");
   });
 
-  render();
+  newPuzzle();
 };

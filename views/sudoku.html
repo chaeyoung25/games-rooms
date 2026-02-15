@@ -25,7 +25,7 @@
           <div class="mascot" aria-hidden="true"></div>
           <div class="brand-text">
             <h1><span class="spark" aria-hidden="true">ARCADE</span> GAMES ROOM</h1>
-            <div class="tag">Sudoku: 9x9 퍼즐을 완성하세요</div>
+            <div class="tag">Sudoku: 5x5~9x9 퍼즐 + 컴퓨터 대전</div>
           </div>
         </div>
         <div class="row">
@@ -37,9 +37,24 @@
 
       <div class="card">
         <div class="inner">
-          <div class="row section-row">
+          <div class="row section-row sudoku-toolbar">
+            <label for="sudokuSize" class="muted">크기</label>
+            <select id="sudokuSize" aria-label="sudoku size">
+              <option value="5">5 x 5</option>
+              <option value="6">6 x 6</option>
+              <option value="7">7 x 7</option>
+              <option value="8">8 x 8</option>
+              <option value="9" selected>9 x 9</option>
+            </select>
+            <label class="muted inline-check" for="sudokuBotMode">
+              <input id="sudokuBotMode" type="checkbox" checked />
+              컴퓨터 대전
+            </label>
             <button id="newSudoku" class="primary">새 퍼즐</button>
             <button id="checkSudoku" class="good">정답 확인</button>
+          </div>
+          <div class="row section-row">
+            <div id="sudokuBotMsg" class="status-msg muted"></div>
             <div id="sudokuMsg" class="status-msg"></div>
           </div>
           <div id="sudokuBoard" class="sudoku-board" aria-label="sudoku board"></div>

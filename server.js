@@ -329,12 +329,15 @@ function countCompleteLines(board, calledSet) {
 
 const rooms = new Map(); // code -> room
 const crocRooms = new Map(); // code -> crocRoom
+const BINGO_BOT_USER_ID = "__bingo_bot__";
+const BINGO_BOT_USERNAME = "COM";
 
 function roomPublicState(room) {
   return {
     code: room.code,
     size: room.size,
     targetLines: room.targetLines,
+    botEnabled: Boolean(room.botEnabled),
     status: room.status,
     hostUserId: room.hostUserId,
     createdAt: room.createdAt,
@@ -343,6 +346,7 @@ function roomPublicState(room) {
       username: p.username,
       online: Boolean(p.online),
       joinedAt: p.joinedAt,
+      isBot: Boolean(p.isBot),
     })),
     calledNumbers: Array.from(room.calledNumbers),
     lastNumber: room.lastNumber ?? null,
@@ -407,7 +411,8 @@ function broadcastCrocRoom(room, event, data) {
 }
 
 function pruneRoomIfEmpty(room) {
-  if (room.players.size > 0) return;
+  const hasHuman = Array.from(room.players.keys()).some((id) => id !== BINGO_BOT_USER_ID);
+  if (hasHuman) return;
   clearTurnTimer(room);
   try {
     for (const sub of room.subscribers) sub.res.end();
@@ -481,6 +486,60 @@ function buildTurnOrder(room) {
   return Array.from(room.players.keys());
 }
 
+function countHumanPlayers(room) {
+  let count = 0;
+  for (const id of room.players.keys()) {
+    if (id !== BINGO_BOT_USER_ID) count++;
+  }
+  return count;
+}
+
+function removeBingoBotIfPresent(room) {
+  if (!room.players.has(BINGO_BOT_USER_ID)) return false;
+  room.players.delete(BINGO_BOT_USER_ID);
+  room.connections.delete(BINGO_BOT_USER_ID);
+  room.turnOrder = room.turnOrder.filter((id) => id !== BINGO_BOT_USER_ID);
+  if (room.turnUserId === BINGO_BOT_USER_ID) {
+    room.turnUserId = null;
+    room.turnEndsAt = null;
+  }
+  return true;
+}
+
+function ensureBingoBot(room) {
+  if (!room.botEnabled) return false;
+  if (room.players.has(BINGO_BOT_USER_ID)) return false;
+  room.players.set(BINGO_BOT_USER_ID, {
+    userId: BINGO_BOT_USER_ID,
+    username: BINGO_BOT_USERNAME,
+    board: generateBoard(room.size),
+    joinedAt: nowIso(),
+    online: true,
+    isBot: true,
+  });
+  return true;
+}
+
+function syncBingoBotForHumans(room) {
+  if (!room.botEnabled) {
+    removeBingoBotIfPresent(room);
+    return;
+  }
+  const humanCount = countHumanPlayers(room);
+  if (humanCount <= 1) ensureBingoBot(room);
+  else removeBingoBotIfPresent(room);
+}
+
+function pickRandomRemainingNumber(room) {
+  const max = room.size * room.size;
+  const remaining = [];
+  for (let n = 1; n <= max; n++) {
+    if (!room.calledNumbers.has(n)) remaining.push(n);
+  }
+  if (remaining.length === 0) return null;
+  return remaining[crypto.randomInt(0, remaining.length)];
+}
+
 function evaluateWinners(room) {
   const winners = [];
   for (const p of room.players.values()) {
@@ -504,7 +563,21 @@ function scheduleTurn(room) {
   clearTurnTimer(room);
   if (room.status !== "playing") return;
   if (!room.turnUserId) return;
-  room.turnEndsAt = null;
+  const isBotTurn = room.turnUserId === BINGO_BOT_USER_ID;
+  const turnMs = isBotTurn ? 1200 : Math.max(1000, Number(room.drawTimeoutSeconds || 10) * 1000);
+  room.turnEndsAt = Date.now() + turnMs;
+  room.turnTimer = setTimeout(() => {
+    if (room.status !== "playing") return;
+    if (!room.turnUserId) return;
+    const actorUserId = room.turnUserId;
+    const selectedNumber = pickRandomRemainingNumber(room);
+    if (selectedNumber == null) return;
+    drawNextNumber(room, {
+      actorUserId,
+      reason: actorUserId === BINGO_BOT_USER_ID ? "bot_pick" : "timeout_auto_pick",
+      selectedNumber,
+    });
+  }, turnMs);
 }
 
 function drawNextNumber(room, { actorUserId, reason, selectedNumber }) {
@@ -1033,10 +1106,11 @@ async function main() {
           sendJson(res, 400, { ok: false, error: "invalid_size" });
           return;
         }
+        const botEnabled = body.value.vsComputer !== false;
 
         let code = pickRoomCode();
         for (let i = 0; i < 10 && rooms.has(code); i++) code = pickRoomCode();
-      if (rooms.has(code)) {
+        if (rooms.has(code)) {
           sendJson(res, 500, { ok: false, error: "room_code_collision" });
           return;
         }
@@ -1048,6 +1122,7 @@ async function main() {
           drawTimeoutSeconds: 10,
           status: "lobby",
           hostUserId: session.userId,
+          botEnabled,
           createdAt: nowIso(),
           players: new Map(),
           calledNumbers: new Set(),
@@ -1090,12 +1165,15 @@ async function main() {
         }
         const existing = room.players.get(session.userId);
         if (!existing) {
-          if (room.players.size >= 8) {
-            sendJson(res, 409, { ok: false, error: "room_full" });
-            return;
-          }
           if (room.status !== "lobby") {
             sendJson(res, 409, { ok: false, error: "room_not_joinable" });
+            return;
+          }
+          if (room.botEnabled && room.players.has(BINGO_BOT_USER_ID)) {
+            removeBingoBotIfPresent(room);
+          }
+          if (countHumanPlayers(room) >= 8) {
+            sendJson(res, 409, { ok: false, error: "room_full" });
             return;
           }
           room.players.set(session.userId, {
@@ -1128,13 +1206,15 @@ async function main() {
         room.players.delete(session.userId);
         room.connections.delete(session.userId);
         room.turnOrder = room.turnOrder.filter((id) => id !== session.userId);
+        syncBingoBotForHumans(room);
 
         if (room.hostUserId === session.userId) {
-          const nextHost = room.players.values().next().value;
+          const nextHost = Array.from(room.players.values()).find((p) => !p.isBot);
           room.hostUserId = nextHost ? nextHost.userId : null;
         }
 
         if (room.status === "playing") {
+          room.turnOrder = buildTurnOrder(room);
           if (room.turnOrder.length === 0) {
             room.status = "ended";
             room.turnUserId = null;
@@ -1147,6 +1227,9 @@ async function main() {
           } else if (!room.turnOrder.includes(room.turnUserId)) {
             if (room.turnCursor >= room.turnOrder.length) room.turnCursor = 0;
             setTurnByCursor(room);
+            scheduleTurn(room);
+          } else {
+            room.turnCursor = room.turnOrder.indexOf(room.turnUserId);
             scheduleTurn(room);
           }
         }
@@ -1180,7 +1263,8 @@ async function main() {
           sendJson(res, 400, { ok: false, error: "invalid_draw_timeout_seconds" });
           return;
         }
-        if (room.players.size < 1) {
+        syncBingoBotForHumans(room);
+        if (countHumanPlayers(room) < 1) {
           sendJson(res, 409, { ok: false, error: "no_players" });
           return;
         }

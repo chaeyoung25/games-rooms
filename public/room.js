@@ -66,15 +66,17 @@ function renderPlayers(room) {
 
     const left = document.createElement("div");
     left.className = "name";
-    left.textContent = p.username + (p.userId === room.hostUserId ? " (방장)" : "");
+    const hostTag = p.userId === room.hostUserId ? " (방장)" : "";
+    const botTag = p.isBot ? " (COM)" : "";
+    left.textContent = p.username + hostTag + botTag;
 
     const right = document.createElement("div");
     right.className = "meta";
 
     const dot = document.createElement("span");
-    dot.className = "dot" + (p.online ? " on" : "");
+    dot.className = "dot" + (p.online || p.isBot ? " on" : "");
     const st = document.createElement("span");
-    st.textContent = p.online ? "online" : "offline";
+    st.textContent = p.isBot ? "bot" : p.online ? "online" : "offline";
     right.append(dot, st);
 
     row.append(left, right);
@@ -244,7 +246,11 @@ window.initRoomPage = async function initRoomPage() {
       turnEl.textContent = "지금 당신 차례입니다. 원하는 번호를 고르세요!";
       turnEl.className = "banner good";
     } else {
-      turnEl.textContent = `지금 ${turnName}님 차례입니다.`;
+      if (room.turnUserId === "__bingo_bot__") {
+        turnEl.textContent = "컴퓨터 차례입니다.";
+      } else {
+        turnEl.textContent = `지금 ${turnName}님 차례입니다.`;
+      }
     }
   }
 

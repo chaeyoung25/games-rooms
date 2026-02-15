@@ -35,7 +35,8 @@ window.initBingoLobbyPage = async function initBingoLobbyPage() {
   $("create").addEventListener("click", async () => {
     setMsg("", "");
     const size = Number($("size").value);
-    const r = await apiJson("/api/rooms", { method: "POST", body: { size } });
+    const vsComputer = Boolean($("vsComputer")?.checked);
+    const r = await apiJson("/api/rooms", { method: "POST", body: { size, vsComputer } });
     if (!r.ok || !r.data?.ok) {
       setMsg("방 만들기 실패. 다시 시도해주세요.", "error");
       return;
