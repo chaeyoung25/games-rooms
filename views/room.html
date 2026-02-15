@@ -51,7 +51,9 @@
               <div class="row section-row">
                 <div id="turnNotice" class="banner">게임 시작을 기다리는 중</div>
                 <div class="pill">남은 시간 <b id="turnCountdown">-</b></div>
-                <button id="draw" class="primary">내 차례 번호 뽑기</button>
+                <label for="pickNumber" class="muted">선택 번호</label>
+                <select id="pickNumber"></select>
+                <button id="draw" class="primary">번호 확정</button>
               </div>
               <div class="row section-row">
                 <div class="pill">최근 번호 <span aria-hidden="true">🔔</span></div>
@@ -68,7 +70,7 @@
               <h2>내 빙고판</h2>
               <div id="board" class="board"></div>
               <div class="muted info-note">
-                참가자가 차례대로 번호를 뽑습니다. 내 차례에 제한시간 안에 눌러주세요.
+                참가자가 차례대로 직접 번호를 선택합니다. 내 차례에 번호를 골라 확정하세요.
               </div>
             </div>
           </div>

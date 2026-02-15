@@ -449,15 +449,10 @@ function scheduleTurn(room) {
   clearTurnTimer(room);
   if (room.status !== "playing") return;
   if (!room.turnUserId) return;
-
-  room.turnEndsAt = Date.now() + room.drawTimeoutSeconds * 1000;
-  room.turnTimer = setTimeout(() => {
-    const actor = room.turnUserId;
-    drawNextNumber(room, { actorUserId: actor, reason: "timeout" });
-  }, room.drawTimeoutSeconds * 1000);
+  room.turnEndsAt = null;
 }
 
-function drawNextNumber(room, { actorUserId, reason }) {
+function drawNextNumber(room, { actorUserId, reason, selectedNumber }) {
   if (room.status !== "playing") return { ok: false, error: "not_playing", number: null };
 
   const max = room.size * room.size;
@@ -474,7 +469,13 @@ function drawNextNumber(room, { actorUserId, reason }) {
     return { ok: true, number: null };
   }
 
-  const number = remaining[crypto.randomInt(0, remaining.length)];
+  const number = Number(selectedNumber);
+  if (!Number.isInteger(number) || number < 1 || number > max) {
+    return { ok: false, error: "invalid_number", number: null };
+  }
+  if (room.calledNumbers.has(number)) {
+    return { ok: false, error: "number_already_called", number: null };
+  }
   room.calledNumbers.add(number);
   room.lastNumber = number;
   room.lastDrawByUserId = actorUserId ?? null;
@@ -905,8 +906,17 @@ async function main() {
           sendJson(res, 403, { ok: false, error: "not_your_turn" });
           return;
         }
-
-        const result = drawNextNumber(room, { actorUserId: session.userId, reason: "manual" });
+        const body = await readJsonBody(req);
+        if (!body.ok) {
+          sendJson(res, 400, { ok: false, error: body.error });
+          return;
+        }
+        const selectedNumber = Number(body.value.number);
+        const result = drawNextNumber(room, {
+          actorUserId: session.userId,
+          reason: "manual_pick",
+          selectedNumber,
+        });
         if (!result.ok) {
           sendJson(res, 409, { ok: false, error: result.error || "draw_failed" });
           return;
