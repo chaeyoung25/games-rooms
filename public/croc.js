@@ -135,6 +135,7 @@ window.initCrocPage = async function initCrocPage() {
       btn.type = "button";
       btn.className = "croc-tooth";
       btn.textContent = String(tooth);
+      btn.dataset.tooth = String(tooth);
       if (selected.has(tooth)) {
         btn.disabled = true;
         btn.classList.add("picked");
