@@ -328,6 +328,7 @@ function countCompleteLines(board, calledSet) {
 }
 
 const rooms = new Map(); // code -> room
+const crocRooms = new Map(); // code -> crocRoom
 
 function roomPublicState(room) {
   return {
@@ -355,12 +356,46 @@ function roomPublicState(room) {
   };
 }
 
+function crocRoomPublicState(room) {
+  return {
+    code: room.code,
+    status: room.status,
+    hostUserId: room.hostUserId,
+    createdAt: room.createdAt,
+    players: Array.from(room.players.values()).map((p) => ({
+      userId: p.userId,
+      username: p.username,
+      online: Boolean(p.online),
+      joinedAt: p.joinedAt,
+      alive: Boolean(p.alive),
+    })),
+    selectedTeeth: Array.from(room.selectedTeeth).sort((a, b) => a - b),
+    turnUserId: room.turnUserId ?? null,
+    lastPickedTooth: room.lastPickedTooth ?? null,
+    lastPickerUserId: room.lastPickerUserId ?? null,
+    loserUserId: room.loserUserId ?? null,
+    loserUsername: room.loserUsername ?? null,
+    winnerUserId: room.winnerUserId ?? null,
+    winnerUsername: room.winnerUsername ?? null,
+  };
+}
+
 function sseWrite(res, event, data) {
   res.write(`event: ${event}\n`);
   res.write(`data: ${JSON.stringify(data)}\n\n`);
 }
 
 function broadcastRoom(room, event, data) {
+  for (const sub of room.subscribers) {
+    try {
+      sseWrite(sub.res, event, data);
+    } catch {
+      // ignore broken pipes
+    }
+  }
+}
+
+function broadcastCrocRoom(room, event, data) {
   for (const sub of room.subscribers) {
     try {
       sseWrite(sub.res, event, data);
@@ -379,6 +414,25 @@ function pruneRoomIfEmpty(room) {
     // ignore
   }
   rooms.delete(room.code);
+}
+
+function pruneCrocRoomIfEmpty(room) {
+  if (room.players.size > 0) return;
+  try {
+    for (const sub of room.subscribers) sub.res.end();
+  } catch {
+    // ignore
+  }
+  crocRooms.delete(room.code);
+}
+
+function crocSetTurnByCursor(room) {
+  if (room.turnOrder.length === 0) {
+    room.turnUserId = null;
+    return;
+  }
+  room.turnCursor = ((room.turnCursor % room.turnOrder.length) + room.turnOrder.length) % room.turnOrder.length;
+  room.turnUserId = room.turnOrder[room.turnCursor];
 }
 
 function requireAuthPage(req, res) {
@@ -640,6 +694,61 @@ async function main() {
       return;
     }
 
+    if (req.method === "GET" && pathname.startsWith("/sse/croc/")) {
+      const session = requireAuthApi(req, res);
+      if (!session) return;
+      const code = pathname.slice("/sse/croc/".length).toUpperCase();
+      const room = crocRooms.get(code);
+      if (!room) {
+        sendJson(res, 404, { ok: false, error: "room_not_found" });
+        return;
+      }
+      const player = room.players.get(session.userId);
+      if (!player) {
+        sendJson(res, 403, { ok: false, error: "not_in_room" });
+        return;
+      }
+
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+      });
+      res.write(`: connected ${nowIso()}\n\n`);
+
+      const sub = { res, userId: session.userId };
+      room.subscribers.add(sub);
+      room.connections.set(session.userId, (room.connections.get(session.userId) || 0) + 1);
+      player.online = true;
+
+      sseWrite(res, "state", crocRoomPublicState(room));
+      broadcastCrocRoom(room, "state", crocRoomPublicState(room));
+
+      const heartbeat = setInterval(() => {
+        try {
+          res.write(`: heartbeat ${nowIso()}\n\n`);
+        } catch {
+          // ignore
+        }
+      }, 25000);
+
+      req.on("close", () => {
+        clearInterval(heartbeat);
+        room.subscribers.delete(sub);
+        const prev = room.connections.get(session.userId) || 0;
+        const next = Math.max(0, prev - 1);
+        if (next === 0) room.connections.delete(session.userId);
+        else room.connections.set(session.userId, next);
+
+        if (!room.connections.has(session.userId)) {
+          const p = room.players.get(session.userId);
+          if (p) p.online = false;
+          broadcastCrocRoom(room, "state", crocRoomPublicState(room));
+        }
+      });
+      return;
+    }
+
     // API
     if (pathname.startsWith("/api/")) {
       if (req.method === "GET" && pathname === "/api/me") {
@@ -694,6 +803,206 @@ async function main() {
       if (req.method === "POST" && pathname === "/api/logout") {
         clearSession(req, res);
         sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/croc/rooms") {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+
+        let code = pickRoomCode();
+        for (let i = 0; i < 10 && crocRooms.has(code); i++) code = pickRoomCode();
+        if (crocRooms.has(code)) {
+          sendJson(res, 500, { ok: false, error: "room_code_collision" });
+          return;
+        }
+
+        const room = {
+          code,
+          status: "lobby",
+          hostUserId: session.userId,
+          createdAt: nowIso(),
+          players: new Map(),
+          selectedTeeth: new Set(),
+          trapTooth: null,
+          turnOrder: [],
+          turnCursor: 0,
+          turnUserId: null,
+          lastPickedTooth: null,
+          lastPickerUserId: null,
+          loserUserId: null,
+          loserUsername: null,
+          winnerUserId: null,
+          winnerUsername: null,
+          subscribers: new Set(),
+          connections: new Map(),
+        };
+        room.players.set(session.userId, {
+          userId: session.userId,
+          username: session.username,
+          joinedAt: nowIso(),
+          online: true,
+          alive: true,
+        });
+        crocRooms.set(code, room);
+        sendJson(res, 200, { ok: true, code });
+        return;
+      }
+
+      if (req.method === "POST" && pathname.startsWith("/api/croc/rooms/") && pathname.endsWith("/join")) {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+        const code = pathname.slice("/api/croc/rooms/".length, -"/join".length).toUpperCase();
+        const room = crocRooms.get(code);
+        if (!room) {
+          sendJson(res, 404, { ok: false, error: "room_not_found" });
+          return;
+        }
+        if (room.status !== "lobby" && !room.players.has(session.userId)) {
+          sendJson(res, 409, { ok: false, error: "room_not_joinable" });
+          return;
+        }
+
+        const existing = room.players.get(session.userId);
+        if (!existing) {
+          room.players.set(session.userId, {
+            userId: session.userId,
+            username: session.username,
+            joinedAt: nowIso(),
+            online: true,
+            alive: true,
+          });
+        } else {
+          existing.online = true;
+        }
+        broadcastCrocRoom(room, "state", crocRoomPublicState(room));
+        sendJson(res, 200, { ok: true, room: crocRoomPublicState(room) });
+        return;
+      }
+
+      if (req.method === "POST" && pathname.startsWith("/api/croc/rooms/") && pathname.endsWith("/leave")) {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+        const code = pathname.slice("/api/croc/rooms/".length, -"/leave".length).toUpperCase();
+        const room = crocRooms.get(code);
+        if (!room) {
+          sendJson(res, 404, { ok: false, error: "room_not_found" });
+          return;
+        }
+        const leavingWasTurn = room.turnUserId === session.userId;
+        room.players.delete(session.userId);
+        room.connections.delete(session.userId);
+        room.turnOrder = room.turnOrder.filter((id) => id !== session.userId);
+
+        if (room.hostUserId === session.userId) {
+          const nextHost = room.players.values().next().value;
+          room.hostUserId = nextHost ? nextHost.userId : null;
+        }
+        if (room.status === "playing" && leavingWasTurn && room.turnOrder.length > 0) {
+          if (room.turnCursor >= room.turnOrder.length) room.turnCursor = 0;
+          crocSetTurnByCursor(room);
+        } else if (room.status === "playing" && room.turnOrder.length === 0) {
+          room.status = "ended";
+          room.turnUserId = null;
+        }
+        broadcastCrocRoom(room, "state", crocRoomPublicState(room));
+        pruneCrocRoomIfEmpty(room);
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      if (req.method === "POST" && pathname.startsWith("/api/croc/rooms/") && pathname.endsWith("/start")) {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+        const code = pathname.slice("/api/croc/rooms/".length, -"/start".length).toUpperCase();
+        const room = crocRooms.get(code);
+        if (!room) {
+          sendJson(res, 404, { ok: false, error: "room_not_found" });
+          return;
+        }
+        if (room.hostUserId !== session.userId) {
+          sendJson(res, 403, { ok: false, error: "host_only" });
+          return;
+        }
+        if (room.players.size < 2) {
+          sendJson(res, 409, { ok: false, error: "need_two_players" });
+          return;
+        }
+        room.status = "playing";
+        room.selectedTeeth = new Set();
+        room.trapTooth = crypto.randomInt(1, 41); // 1~40
+        room.loserUserId = null;
+        room.loserUsername = null;
+        room.winnerUserId = null;
+        room.winnerUsername = null;
+        for (const p of room.players.values()) p.alive = true;
+        room.turnOrder = Array.from(room.players.keys());
+        room.turnCursor = 0;
+        crocSetTurnByCursor(room);
+        room.lastPickedTooth = null;
+        room.lastPickerUserId = null;
+        broadcastCrocRoom(room, "state", crocRoomPublicState(room));
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      if (req.method === "POST" && pathname.startsWith("/api/croc/rooms/") && pathname.endsWith("/pick")) {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+        const code = pathname.slice("/api/croc/rooms/".length, -"/pick".length).toUpperCase();
+        const room = crocRooms.get(code);
+        if (!room) {
+          sendJson(res, 404, { ok: false, error: "room_not_found" });
+          return;
+        }
+        if (room.status !== "playing") {
+          sendJson(res, 409, { ok: false, error: "not_playing" });
+          return;
+        }
+        if (room.turnUserId !== session.userId) {
+          sendJson(res, 403, { ok: false, error: "not_your_turn" });
+          return;
+        }
+        const body = await readJsonBody(req);
+        if (!body.ok) {
+          sendJson(res, 400, { ok: false, error: body.error });
+          return;
+        }
+        const tooth = Number(body.value.tooth);
+        if (!Number.isInteger(tooth) || tooth < 1 || tooth > 40) {
+          sendJson(res, 400, { ok: false, error: "invalid_tooth" });
+          return;
+        }
+        if (room.selectedTeeth.has(tooth)) {
+          sendJson(res, 409, { ok: false, error: "already_selected" });
+          return;
+        }
+        room.selectedTeeth.add(tooth);
+        room.lastPickedTooth = tooth;
+        room.lastPickerUserId = session.userId;
+        const picker = room.players.get(session.userId);
+        if (tooth === room.trapTooth) {
+          room.status = "ended";
+          room.turnUserId = null;
+          if (picker) picker.alive = false;
+          room.loserUserId = session.userId;
+          room.loserUsername = picker ? picker.username : null;
+          const winner = Array.from(room.players.values()).find((p) => p.userId !== session.userId);
+          room.winnerUserId = winner ? winner.userId : null;
+          room.winnerUsername = winner ? winner.username : null;
+          broadcastCrocRoom(room, "state", crocRoomPublicState(room));
+          sendJson(res, 200, { ok: true, trap: true });
+          return;
+        }
+
+        if (room.turnOrder.length > 0) {
+          room.turnCursor = (room.turnCursor + 1) % room.turnOrder.length;
+          crocSetTurnByCursor(room);
+        } else {
+          room.turnUserId = null;
+        }
+        broadcastCrocRoom(room, "state", crocRoomPublicState(room));
+        sendJson(res, 200, { ok: true, trap: false });
         return;
       }
 

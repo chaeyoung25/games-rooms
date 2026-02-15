@@ -685,6 +685,91 @@ button.ghost {
   color: #a34a68;
 }
 
+.croc-mouth {
+  margin-top: 12px;
+  border-radius: 22px;
+  border: 2px solid #74b26f;
+  background: linear-gradient(180deg, #78cb65, #5cae52);
+  padding: 12px;
+  box-shadow: 0 12px 18px rgba(27, 71, 30, 0.22);
+}
+
+.jaw {
+  border-radius: 16px;
+  border: 2px solid #6aa863;
+  background: linear-gradient(180deg, #78c66d, #60b157);
+  padding: 8px;
+  transition: transform 220ms ease;
+}
+
+.jaw.top {
+  transform: translateY(0);
+}
+
+.jaw.bottom {
+  transform: translateY(0);
+}
+
+.jaw-track {
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.teeth-row {
+  display: grid;
+  grid-template-columns: repeat(20, minmax(34px, 1fr));
+  gap: 6px;
+  min-width: 760px;
+}
+
+.mouth-gap {
+  margin: 10px 0;
+  border-radius: 14px;
+  border: 2px solid #d6807b;
+  background: linear-gradient(180deg, #f05f59, #d94742);
+  min-height: 64px;
+  display: grid;
+  place-items: center;
+  color: #ffe8d8;
+  font-weight: 800;
+}
+
+.croc-tooth {
+  min-height: 44px;
+  border-radius: 10px;
+  border: 2px solid #f0d6af;
+  background: linear-gradient(180deg, #fff9ef, #f5e2c4);
+  color: #7b5f3b;
+  font-family: var(--font-display);
+  font-size: 18px;
+}
+
+.croc-tooth.picked {
+  border-color: #b1dec3;
+  background: linear-gradient(180deg, #eefcf4, #d8f0e3);
+  color: #3f7258;
+}
+
+.croc-tooth.trap {
+  border-color: #ef9fb6;
+  background: linear-gradient(180deg, #ffeef4, #f4c3d2);
+  color: #a34a68;
+}
+
+.croc-mouth.closed .jaw.top {
+  transform: translateY(26px);
+}
+
+.croc-mouth.closed .jaw.bottom {
+  transform: translateY(-26px);
+}
+
+@media (max-width: 920px) {
+  .teeth-row {
+    min-width: 620px;
+  }
+}
+
 .error,
 .ok {
   margin-top: 10px;

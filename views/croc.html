@@ -35,14 +35,51 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card room-main">
         <div class="inner">
-          <div class="row section-row">
-            <button id="resetCroc" class="primary">새 게임</button>
-            <div id="crocMsg" class="status-msg">아래 이빨을 눌러보세요.</div>
+          <div class="row">
+            <button id="createCroc" class="primary">악어방 만들기</button>
+            <input id="crocCode" placeholder="방 코드 입력 (예: A7K9Q2)" />
+            <button id="joinCroc" class="good">참가</button>
+            <button id="leaveCroc" class="ghost">나가기</button>
+            <button id="startCroc" class="primary" style="display: none">게임 시작</button>
           </div>
-          <div id="crocTeeth" class="croc-grid" aria-label="croc teeth"></div>
+          <div id="crocMsg" class="status-msg"></div>
         </div>
+      </div>
+
+      <div class="room-layout">
+        <section class="room-stage">
+          <div class="card">
+            <div class="inner">
+              <div id="crocTurn" class="banner">방을 만들거나 참가하세요.</div>
+              <div id="crocMouth" class="croc-mouth">
+                <div class="jaw top">
+                  <div class="jaw-track">
+                    <div id="teethTop" class="teeth-row"></div>
+                  </div>
+                </div>
+                <div class="mouth-gap">
+                  <span>40개 이빨 중 1개는 함정</span>
+                </div>
+                <div class="jaw bottom">
+                  <div class="jaw-track">
+                    <div id="teethBottom" class="teeth-row"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <aside class="room-side">
+          <div class="card side-card">
+            <div class="inner">
+              <h2>참가자</h2>
+              <div class="muted">순서대로 이빨 선택</div>
+              <div id="crocPlayers" class="players"></div>
+            </div>
+          </div>
+        </aside>
       </div>
     </div>
 
