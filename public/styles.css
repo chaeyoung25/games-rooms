@@ -686,95 +686,163 @@ button.ghost {
 }
 
 .croc-mouth {
-  margin-top: 12px;
-  border-radius: 22px;
-  border: 2px solid #4d9d40;
-  background: linear-gradient(180deg, #57c54d, #39a331);
-  padding: 12px;
-  box-shadow: 0 12px 18px rgba(27, 71, 30, 0.28);
+  margin-top: 16px;
+  padding: 8px 10px 18px;
+  perspective: 1400px;
   position: relative;
+}
+
+.croc-shell {
+  position: relative;
+  border-radius: 28px 42px 32px 46px;
+  border: 3px solid #2f8b3a;
+  background:
+    radial-gradient(120% 70% at 70% 0%, rgba(207, 255, 208, 0.65), transparent 56%),
+    linear-gradient(160deg, #60dc63 0%, #35ba43 48%, #23a637 100%);
+  padding: 14px 14px 18px;
+  box-shadow:
+    0 20px 30px rgba(19, 70, 22, 0.36),
+    inset 0 2px 0 rgba(235, 255, 237, 0.76),
+    inset 0 -16px 24px rgba(31, 112, 40, 0.5);
+  transform: rotate(-7deg) skewX(-5deg);
+  transform-origin: 46% 58%;
+}
+
+.croc-tail {
+  position: absolute;
+  left: -42px;
+  top: 44%;
+  width: 88px;
+  height: 54px;
+  border-radius: 26px 36px 18px 26px;
+  border: 3px solid #2f8b3a;
+  background: linear-gradient(150deg, #58d35f, #2faa3f);
+  box-shadow: inset 0 2px 0 rgba(232, 255, 235, 0.72);
+  transform: translateY(-50%) rotate(-8deg);
 }
 
 .croc-face {
   display: flex;
   justify-content: space-between;
-  padding: 0 14px 8px;
+  align-items: center;
+  padding: 2px 22px 10px 20px;
+  position: relative;
+}
+
+.croc-nose {
+  position: absolute;
+  right: 12px;
+  top: 8px;
+  width: 86px;
+  height: 30px;
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 34% 48%, #1d6f30 12%, transparent 13%),
+    radial-gradient(circle at 66% 48%, #1d6f30 12%, transparent 13%),
+    linear-gradient(180deg, #61d36b, #38ad45);
+  border: 2px solid #2c8337;
 }
 
 .croc-eye {
-  width: 46px;
-  height: 28px;
-  border-radius: 16px;
+  width: 58px;
+  height: 34px;
+  border-radius: 18px;
   background: #e6f7ff;
-  border: 2px solid #3f8f34;
+  border: 2px solid #2f8438;
   position: relative;
+  box-shadow: inset 0 -5px 0 rgba(18, 86, 29, 0.26);
 }
 
 .croc-eye span {
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  background: #d43737;
-  top: 6px;
+  background:
+    radial-gradient(circle at 30% 24%, #ffcf8f, #ca562f 58%, #7c2518 100%);
+  top: 7px;
 }
 
 .croc-eye.left span {
-  right: 8px;
+  right: 10px;
 }
 
 .croc-eye.right span {
-  left: 8px;
+  left: 10px;
 }
 
 .jaw {
-  border-radius: 16px;
-  border: 2px solid #3f8f34;
-  background: linear-gradient(180deg, #63cc57, #4fa843);
-  padding: 8px;
-  transition: transform 220ms ease;
+  border-radius: 20px;
+  border: 3px solid #2f8b3a;
+  padding: 10px 12px;
+  transition: transform 180ms ease;
+  position: relative;
+  overflow: hidden;
 }
 
 .jaw.top {
+  background:
+    radial-gradient(120% 80% at 58% 0%, rgba(255, 255, 255, 0.35), transparent 65%),
+    linear-gradient(170deg, #49c954 0%, #2ea63b 58%, #239536 100%);
   transform: translateY(0);
+  border-radius: 24px 32px 14px 28px;
 }
 
 .jaw.bottom {
+  background:
+    linear-gradient(180deg, #29a73b, #229032),
+    linear-gradient(180deg, #d83a3a, #be2e2e);
+  border-radius: 22px 20px 26px 26px;
   transform: translateY(0);
 }
 
 .jaw-track {
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding: 4px 2px 6px;
 }
 
 .teeth-row {
   display: grid;
   grid-template-columns: repeat(20, minmax(34px, 1fr));
-  gap: 6px;
-  min-width: 760px;
+  gap: 7px;
+  min-width: 900px;
+  align-items: end;
 }
 
 .mouth-gap {
-  margin: 10px 0;
-  border-radius: 14px;
-  border: 2px solid #c95555;
-  background: radial-gradient(circle at 50% 30%, #ea6666, #c73939 70%);
-  min-height: 64px;
+  margin: 10px 0 12px;
+  border-radius: 18px;
+  border: 3px solid #c03131;
+  background:
+    radial-gradient(120% 90% at 52% 0%, rgba(255, 175, 175, 0.58), transparent 54%),
+    linear-gradient(180deg, #f75858, #c92d2d);
+  min-height: 84px;
   display: grid;
   place-items: center;
-  color: #ffe8d8;
+  color: #ffe7df;
   font-weight: 800;
+  box-shadow: inset 0 8px 16px rgba(255, 197, 197, 0.25), inset 0 -10px 16px rgba(112, 0, 0, 0.24);
 }
 
 .croc-tooth {
-  min-height: 44px;
-  border-radius: 10px;
-  border: 2px solid #ead1ab;
-  background: linear-gradient(180deg, #fffdf8, #f4e5cd);
-  color: #7b5f3b;
+  min-height: 48px;
+  border-radius: 13px 13px 18px 18px;
+  border: 2px solid #e0c79c;
+  background:
+    radial-gradient(80% 48% at 50% 15%, rgba(255, 255, 255, 0.92), transparent 62%),
+    linear-gradient(180deg, #fffef9, #f2dfbf);
+  color: #7a5f3d;
   font-family: var(--font-display);
   font-size: 18px;
+  box-shadow: 0 4px 0 #cfb38d, 0 9px 12px rgba(65, 38, 16, 0.2);
+}
+
+#teethTop .croc-tooth {
+  border-radius: 18px 18px 13px 13px;
+}
+
+#teethBottom .croc-tooth {
+  border-radius: 13px 13px 18px 18px;
 }
 
 .croc-tooth.picked {
@@ -790,16 +858,22 @@ button.ghost {
 }
 
 .croc-mouth.closed .jaw.top {
-  transform: translateY(38px);
+  transform: translateY(52px);
 }
 
 .croc-mouth.closed .jaw.bottom {
-  transform: translateY(-38px);
+  transform: translateY(-48px);
 }
 
 @media (max-width: 920px) {
+  .croc-shell {
+    transform: rotate(-4deg) skewX(-3deg);
+  }
   .teeth-row {
-    min-width: 620px;
+    min-width: 640px;
+  }
+  .croc-tail {
+    display: none;
   }
 }
 
