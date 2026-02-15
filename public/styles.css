@@ -687,69 +687,86 @@ button.ghost {
 
 .croc-mouth {
   margin-top: 18px;
-  padding: 10px 8px 28px;
-  perspective: 2100px;
+  padding: 10px 6px 32px;
+  perspective: 2400px;
   position: relative;
 }
 
 .croc-shell {
   position: relative;
-  max-width: 1040px;
+  max-width: 980px;
   margin: 0 auto;
-  border-radius: 42px 120px 36px 94px;
-  border: 3px solid #2d8a3b;
+  border-radius: 54px 170px 50px 130px;
+  border: 3px solid #228036;
   background:
-    radial-gradient(140% 82% at 72% -8%, rgba(233, 255, 236, 0.92), transparent 52%),
-    radial-gradient(34% 18% at 64% 24%, rgba(255, 255, 255, 0.48), transparent 70%),
-    linear-gradient(164deg, #59d965 0%, #30bb45 52%, #1f9b35 100%);
-  padding: 12px 18px 24px;
+    radial-gradient(148% 92% at 70% -14%, rgba(233, 255, 236, 0.93), transparent 50%),
+    radial-gradient(44% 26% at 62% 24%, rgba(255, 255, 255, 0.46), transparent 74%),
+    linear-gradient(165deg, #5ddd68 0%, #31be47 54%, #1f9a35 100%);
+  padding: 10px 20px 26px;
   box-shadow:
-    0 26px 36px rgba(11, 63, 21, 0.34),
-    inset 0 3px 0 rgba(244, 255, 245, 0.8),
-    inset 0 -16px 24px rgba(18, 95, 32, 0.42);
+    0 30px 38px rgba(11, 60, 19, 0.33),
+    inset 0 3px 0 rgba(244, 255, 245, 0.84),
+    inset 0 -14px 24px rgba(16, 90, 30, 0.4);
   transform: rotate(-8deg) skewX(-4deg);
-  transform-origin: 44% 58%;
+  transform-origin: 42% 56%;
+  animation: crocIdle 2600ms ease-in-out infinite;
+}
+
+.croc-mouth.closed .croc-shell {
+  animation: none;
 }
 
 .croc-shell::before {
   content: "";
   position: absolute;
-  top: 14px;
-  right: 130px;
-  width: 180px;
-  height: 34px;
-  border-radius: 40px;
+  top: 12px;
+  right: 120px;
+  width: 220px;
+  height: 38px;
+  border-radius: 44px;
   background: linear-gradient(180deg, rgba(244, 255, 245, 0.82), rgba(244, 255, 245, 0.04));
-  transform: rotate(-6deg);
+  transform: rotate(-7deg);
+}
+
+.croc-shell::after {
+  content: "";
+  position: absolute;
+  left: 36px;
+  right: 110px;
+  bottom: 12px;
+  height: 36px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(16, 93, 30, 0.3), rgba(15, 73, 24, 0));
 }
 
 .croc-tail {
   position: absolute;
-  left: -58px;
-  top: 47%;
-  width: 116px;
-  height: 66px;
-  border-radius: 34px 46px 26px 34px;
-  border: 3px solid #2f8b3a;
+  left: -66px;
+  top: 50%;
+  width: 124px;
+  height: 70px;
+  border-radius: 38px 52px 28px 36px;
+  border: 3px solid #238338;
   background:
     radial-gradient(120% 88% at 72% 10%, rgba(236, 255, 238, 0.52), transparent 64%),
-    linear-gradient(150deg, #59d45f, #299f3f);
+    linear-gradient(150deg, #5ad760, #2a9f3f);
   box-shadow: inset 0 2px 0 rgba(232, 255, 235, 0.72);
-  transform: translateY(-50%) rotate(-10deg);
+  transform: translateY(-50%) rotate(-12deg);
 }
 
 .croc-back-ridges {
   position: absolute;
-  left: -6px;
-  top: 24px;
-  width: 180px;
-  height: 18px;
+  left: -8px;
+  top: 26px;
+  width: 212px;
+  height: 20px;
   background:
-    radial-gradient(circle at 12px 8px, #53cf5b 0 8px, transparent 9px),
-    radial-gradient(circle at 42px 7px, #4dc956 0 8px, transparent 9px),
-    radial-gradient(circle at 72px 8px, #46c350 0 8px, transparent 9px),
-    radial-gradient(circle at 102px 8px, #40bc49 0 8px, transparent 9px),
-    radial-gradient(circle at 132px 8px, #39b242 0 8px, transparent 9px);
+    radial-gradient(circle at 14px 8px, #53cf5b 0 8px, transparent 9px),
+    radial-gradient(circle at 46px 8px, #4dc956 0 8px, transparent 9px),
+    radial-gradient(circle at 78px 8px, #46c350 0 8px, transparent 9px),
+    radial-gradient(circle at 110px 8px, #40bc49 0 8px, transparent 9px),
+    radial-gradient(circle at 142px 8px, #3ab543 0 8px, transparent 9px),
+    radial-gradient(circle at 174px 8px, #35ae3e 0 8px, transparent 9px);
   opacity: 0.85;
 }
 
@@ -757,30 +774,30 @@ button.ghost {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2px 30px 11px 80px;
+  padding: 2px 34px 8px 116px;
   position: relative;
 }
 
 .croc-nose {
   position: absolute;
-  right: 18px;
-  top: 4px;
-  width: 120px;
-  height: 38px;
-  border-radius: 26px;
+  right: 20px;
+  top: 2px;
+  width: 132px;
+  height: 42px;
+  border-radius: 30px;
   background:
-    radial-gradient(circle at 32% 46%, #1f7531 11%, transparent 12%),
-    radial-gradient(circle at 68% 46%, #1f7531 11%, transparent 12%),
+    radial-gradient(circle at 32% 48%, #1f7130 12%, transparent 13%),
+    radial-gradient(circle at 68% 48%, #1f7130 12%, transparent 13%),
     linear-gradient(180deg, #73e377, #37ad45);
   border: 2px solid #2b8338;
 }
 
 .croc-eye {
-  width: 66px;
-  height: 44px;
-  border-radius: 24px;
-  background: linear-gradient(180deg, #f5fbfe, #d6edf9);
-  border: 2px solid #2b8338;
+  width: 72px;
+  height: 48px;
+  border-radius: 26px;
+  background: linear-gradient(180deg, #f5fbff, #d6edf8);
+  border: 2px solid #237f36;
   position: relative;
   box-shadow:
     inset 0 -6px 0 rgba(18, 86, 29, 0.3),
@@ -789,57 +806,57 @@ button.ghost {
 
 .croc-eye span {
   position: absolute;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 30% 24%, #ffd9a4 0 28%, #cb5b2f 55%, #7f2718 100%);
-  top: 9px;
+    radial-gradient(circle at 28% 24%, #ffdca9 0 28%, #cb5b2f 56%, #7f2718 100%);
+  top: 10px;
 }
 
 .croc-eye span::after {
   content: "";
   position: absolute;
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: #fff6df;
-  top: 3px;
+  top: 4px;
   left: 4px;
 }
 
 .croc-eye.left span {
-  right: 12px;
+  right: 14px;
 }
 
 .croc-eye.right span {
-  left: 12px;
+  left: 14px;
 }
 
 .croc-hinge {
   position: absolute;
-  top: 47%;
-  width: 24px;
-  height: 24px;
+  top: 49%;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
-  border: 3px solid #2f8b3a;
+  border: 3px solid #267f37;
   background:
-    radial-gradient(circle at 35% 35%, #a0ef9f, #3ba949 70%);
+    radial-gradient(circle at 35% 35%, #a9f3a8, #3ba949 70%);
   transform: translateY(-50%);
 }
 
 .croc-hinge.left {
-  left: -10px;
+  left: -12px;
 }
 
 .croc-hinge.right {
-  right: 34px;
+  right: 30px;
 }
 
 .jaw {
   border-radius: 22px;
-  border: 3px solid #2f8b3a;
-  padding: 8px 12px;
+  border: 3px solid #287f38;
+  padding: 8px 11px;
   transition: transform 180ms ease;
   position: relative;
   overflow: hidden;
@@ -847,65 +864,68 @@ button.ghost {
 
 .jaw.top {
   background:
-    radial-gradient(132% 86% at 64% -8%, rgba(255, 255, 255, 0.54), transparent 60%),
-    linear-gradient(170deg, #4ed658 0%, #2dac41 58%, #249739 100%);
-  transform: translateY(-3px) rotate(-2deg);
-  transform-origin: 30% 80%;
-  border-radius: 30px 70px 20px 40px;
-  margin-left: 46px;
-  margin-right: 8px;
+    radial-gradient(136% 88% at 64% -8%, rgba(255, 255, 255, 0.56), transparent 60%),
+    linear-gradient(170deg, #4fd859 0%, #2eaf41 58%, #249638 100%);
+  transform: translateY(-7px) rotate(-4deg);
+  transform-origin: 28% 84%;
+  border-radius: 42px 140px 26px 56px;
+  margin-left: 92px;
+  margin-right: 14px;
   z-index: 2;
+  box-shadow: inset 0 -8px 14px rgba(13, 90, 30, 0.34);
 }
 
 .jaw.bottom {
   background:
-    radial-gradient(130% 90% at 60% 2%, rgba(245, 255, 246, 0.3), transparent 60%),
-    linear-gradient(180deg, #35be47, #289f38);
-  border-radius: 26px 20px 46px 40px;
-  margin-left: 10px;
-  margin-right: 56px;
-  transform: translateY(0);
+    radial-gradient(132% 92% at 62% 2%, rgba(245, 255, 246, 0.34), transparent 60%),
+    linear-gradient(180deg, #37c148, #29a039);
+  border-radius: 34px 26px 88px 80px;
+  margin-left: 8px;
+  margin-right: 96px;
+  transform: translateY(0) rotate(-1.5deg);
+  box-shadow: inset 0 -10px 16px rgba(18, 92, 31, 0.35);
 }
 
 .jaw-track {
   overflow-x: auto;
-  padding: 9px 8px;
-  border: 3px solid #c52128;
+  padding: 9px 8px 10px;
+  border: 3px solid #c31a23;
   background:
-    radial-gradient(120% 90% at 50% -6%, rgba(255, 192, 192, 0.68), transparent 52%),
-    linear-gradient(180deg, #f65757, #c61f27);
+    radial-gradient(124% 94% at 50% -8%, rgba(255, 195, 195, 0.74), transparent 52%),
+    linear-gradient(180deg, #f95d5d, #c81d26);
   box-shadow:
     inset 0 -10px 14px rgba(105, 5, 8, 0.3),
-    inset 0 6px 10px rgba(255, 215, 215, 0.22);
+    inset 0 7px 10px rgba(255, 215, 215, 0.28);
 }
 
 .jaw.top .jaw-track {
-  border-radius: 10px 14px 18px 22px;
+  border-radius: 22px 40px 24px 32px;
+  padding-top: 10px;
 }
 
 .jaw.bottom .jaw-track {
-  border-radius: 18px 18px 34px 34px;
-  padding-top: 10px;
-  padding-bottom: 12px;
+  border-radius: 26px 24px 60px 58px;
+  padding-top: 12px;
+  padding-bottom: 14px;
 }
 
 .teeth-row {
   display: grid;
-  grid-template-columns: repeat(20, minmax(38px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(20, minmax(34px, 1fr));
+  gap: 6px;
   width: max-content;
-  min-width: 860px;
+  min-width: 760px;
   align-items: end;
 }
 
 .mouth-gap {
-  margin: 8px 22px 10px 34px;
-  border-radius: 20px;
-  border: 3px solid #c0222a;
+  margin: 8px 46px 10px 52px;
+  border-radius: 24px;
+  border: 3px solid #be1d27;
   background:
-    radial-gradient(160% 90% at 36% 5%, rgba(255, 190, 190, 0.48), transparent 50%),
-    linear-gradient(180deg, #f5474d, #b71522);
-  min-height: 92px;
+    radial-gradient(168% 95% at 36% 5%, rgba(255, 192, 192, 0.54), transparent 50%),
+    linear-gradient(180deg, #f34c54, #b81220);
+  min-height: 86px;
   display: grid;
   place-items: center;
   color: #ffe2e2;
@@ -919,20 +939,22 @@ button.ghost {
 .mouth-gap::before {
   content: "";
   position: absolute;
-  left: 18%;
-  right: 20%;
+  left: 16%;
+  right: 18%;
   bottom: 8px;
-  height: 30px;
-  border-radius: 22px;
-  background: linear-gradient(180deg, rgba(255, 98, 116, 0.74), rgba(156, 12, 28, 0.54));
+  height: 28px;
+  border-radius: 20px;
+  background: linear-gradient(180deg, rgba(255, 103, 121, 0.76), rgba(160, 12, 30, 0.56));
 }
 
 .croc-tooth {
-  min-height: 56px;
+  --tilt: 0deg;
+  min-height: 46px;
+  min-width: 30px;
   border: 1px solid #d9c49f;
   border-radius: 0;
   background:
-    radial-gradient(80% 46% at 50% 20%, rgba(255, 255, 255, 0.95), transparent 62%),
+    radial-gradient(80% 46% at 50% 20%, rgba(255, 255, 255, 0.97), transparent 62%),
     linear-gradient(180deg, #fffef9, #f0d9b1);
   color: transparent;
   font-family: var(--font-display);
@@ -940,8 +962,10 @@ button.ghost {
   letter-spacing: 0.2px;
   display: flex;
   justify-content: center;
-  box-shadow: 0 4px 0 #b59569, 0 10px 12px rgba(61, 32, 8, 0.2);
+  box-shadow: 0 3px 0 #b59569, 0 7px 9px rgba(61, 32, 8, 0.2);
   position: relative;
+  transform: rotate(var(--tilt));
+  transition: transform 120ms ease, filter 120ms ease;
 }
 
 .croc-tooth::after {
@@ -970,23 +994,45 @@ button.ghost {
 #teethTop .croc-tooth {
   clip-path: polygon(0 0, 100% 0, 50% 100%);
   align-items: flex-start;
-  padding-top: 5px;
+  padding-top: 4px;
 }
 
 #teethTop .croc-tooth::after {
   left: 50%;
-  top: 5px;
+  top: 4px;
 }
 
 #teethBottom .croc-tooth {
   clip-path: polygon(50% 0, 0 100%, 100% 100%);
   align-items: flex-end;
-  padding-bottom: 5px;
+  padding-bottom: 4px;
 }
 
 #teethBottom .croc-tooth::after {
   left: 50%;
-  bottom: 5px;
+  bottom: 4px;
+}
+
+#teethTop .croc-tooth:nth-child(odd) {
+  --tilt: -4deg;
+}
+
+#teethTop .croc-tooth:nth-child(3n) {
+  --tilt: 2deg;
+}
+
+#teethBottom .croc-tooth:nth-child(even) {
+  --tilt: 3deg;
+}
+
+#teethBottom .croc-tooth:nth-child(3n) {
+  --tilt: -2deg;
+}
+
+.croc-tooth:not(:disabled):hover,
+.croc-tooth:not(:disabled):focus-visible {
+  transform: translateY(-1px) rotate(var(--tilt));
+  filter: brightness(1.03);
 }
 
 .croc-tooth.picked {
@@ -1002,11 +1048,11 @@ button.ghost {
 }
 
 .croc-mouth.closed .jaw.top {
-  transform: translateY(58px) rotate(1deg);
+  transform: translateY(52px) rotate(-1deg);
 }
 
 .croc-mouth.closed .jaw.bottom {
-  transform: translateY(-54px) rotate(-1deg);
+  transform: translateY(-48px) rotate(-0.8deg);
 }
 
 .croc-paws {
@@ -1020,13 +1066,13 @@ button.ghost {
 }
 
 .paw {
-  width: 120px;
-  height: 46px;
+  width: 126px;
+  height: 50px;
   border-radius: 24px 20px 16px 16px;
-  border: 3px solid #2f8b3a;
+  border: 3px solid #268238;
   background:
     radial-gradient(130% 80% at 56% 0%, rgba(238, 255, 240, 0.7), transparent 54%),
-    linear-gradient(180deg, #63da6b, #37b349);
+    linear-gradient(180deg, #64dc6b, #38b54a);
   position: relative;
 }
 
@@ -1046,33 +1092,44 @@ button.ghost {
 
 @media (max-width: 920px) {
   .croc-shell {
-    transform: rotate(-4deg) skewX(-2deg);
+    transform: rotate(-4deg) skewX(-1deg);
+    animation: none;
   }
   .croc-back-ridges,
   .croc-paws {
     display: none;
   }
   .croc-face {
-    padding-left: 34px;
+    padding-left: 42px;
     padding-right: 12px;
   }
   .jaw.top {
-    margin-left: 18px;
+    margin-left: 30px;
     margin-right: 4px;
   }
   .jaw.bottom {
-    margin-right: 16px;
+    margin-right: 28px;
   }
   .mouth-gap {
-    margin-left: 14px;
-    margin-right: 10px;
-    min-height: 78px;
+    margin-left: 20px;
+    margin-right: 18px;
+    min-height: 74px;
   }
   .teeth-row {
-    min-width: 620px;
+    min-width: 560px;
   }
   .croc-tail {
     display: none;
+  }
+}
+
+@keyframes crocIdle {
+  0%,
+  100% {
+    transform: rotate(-8deg) skewX(-4deg) translateY(0);
+  }
+  50% {
+    transform: rotate(-8deg) skewX(-4deg) translateY(-2px);
   }
 }
 
