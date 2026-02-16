@@ -1921,6 +1921,7 @@ body.celebrate .banner.good {
   border-radius: 4px;
   background: rgba(255, 255, 255, 0.16);
   position: relative;
+  isolation: isolate;
   display: grid;
   place-items: center;
   padding: 0;
@@ -1931,6 +1932,7 @@ body.celebrate .banner.good {
   content: "";
   position: absolute;
   background: rgba(104, 71, 37, 0.5);
+  z-index: 1;
 }
 
 .gomoku-cell::before {
@@ -1958,18 +1960,28 @@ body.celebrate .banner.good {
 .gomoku-stone {
   width: 72%;
   aspect-ratio: 1;
+  display: block;
+  position: relative;
   border-radius: 50%;
-  z-index: 2;
+  z-index: 3;
 }
 
 .gomoku-stone.black {
-  background: radial-gradient(circle at 30% 30%, #5f5f5f, #1b1b1b 66%);
-  box-shadow: inset -2px -2px 4px rgba(255, 255, 255, 0.12), 0 2px 4px rgba(0, 0, 0, 0.4);
+  border: 1.5px solid #0f0f0f;
+  background: radial-gradient(circle at 30% 28%, #676767 0%, #2a2a2a 52%, #0d0d0d 100%);
+  box-shadow:
+    inset -2px -2px 4px rgba(255, 255, 255, 0.12),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.08),
+    0 2px 4px rgba(0, 0, 0, 0.42);
 }
 
 .gomoku-stone.white {
-  background: radial-gradient(circle at 28% 28%, #ffffff, #e7e7e7 64%, #cccccc);
-  box-shadow: inset -2px -2px 4px rgba(255, 255, 255, 0.9), 0 2px 4px rgba(0, 0, 0, 0.25);
+  border: 1.5px solid #868686;
+  background: radial-gradient(circle at 30% 28%, #ffffff 0%, #f4f4f4 54%, #cfcfcf 100%);
+  box-shadow:
+    inset -2px -2px 4px rgba(255, 255, 255, 0.95),
+    inset 1px 1px 2px rgba(255, 255, 255, 0.72),
+    0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .gomoku-cell.last .gomoku-stone {
