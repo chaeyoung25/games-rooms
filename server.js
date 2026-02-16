@@ -997,11 +997,6 @@ async function main() {
       await sendFile(res, path.join(VIEWS_DIR, "gomoku.html"));
       return;
     }
-    if (req.method === "GET" && pathname === "/save-pets") {
-      if (!requireAuthPage(req, res)) return;
-      await sendFile(res, path.join(VIEWS_DIR, "save-pets.html"));
-      return;
-    }
     if (req.method === "GET" && pathname === "/freecell") {
       redirect(res, "/lobby");
       return;
