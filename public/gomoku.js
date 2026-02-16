@@ -366,9 +366,7 @@ window.initGomokuPage = async function initGomokuPage() {
       const v = board[i];
       if (v) {
         cell.disabled = true;
-        const stone = document.createElement("span");
-        stone.className = `gomoku-stone ${v === "B" ? "black" : "white"}`;
-        cell.append(stone);
+        cell.classList.add(v === "B" ? "filled-black" : "filled-white");
       } else {
         cell.disabled = !(canPlayBot || canPlayPvp);
       }

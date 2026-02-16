@@ -58,6 +58,8 @@ function contentTypeForPath(filePath) {
     case ".jpg":
     case ".jpeg":
       return "image/jpeg";
+    case ".mp3":
+      return "audio/mpeg";
     case ".ico":
       return "image/x-icon";
     default:
@@ -982,8 +984,7 @@ async function main() {
       return;
     }
     if (req.method === "GET" && pathname === "/croc") {
-      if (!requireAuthPage(req, res)) return;
-      await sendFile(res, path.join(VIEWS_DIR, "croc.html"));
+      redirect(res, "/lobby");
       return;
     }
     if (req.method === "GET" && pathname === "/memory") {
@@ -997,8 +998,7 @@ async function main() {
       return;
     }
     if (req.method === "GET" && pathname === "/freecell") {
-      if (!requireAuthPage(req, res)) return;
-      await sendFile(res, path.join(VIEWS_DIR, "freecell.html"));
+      redirect(res, "/lobby");
       return;
     }
     if (req.method === "GET" && pathname.startsWith("/room/")) {
