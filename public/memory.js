@@ -26,6 +26,17 @@ function columnsForCount(cardCount) {
   return 10;
 }
 
+function fitColumnsForViewport(targetCols) {
+  const vw = Math.max(320, window.innerWidth || document.documentElement.clientWidth || 0);
+  let minCardWidth = 128;
+  if (vw <= 420) minCardWidth = 88;
+  else if (vw <= 640) minCardWidth = 96;
+  else if (vw <= 920) minCardWidth = 108;
+  const usable = Math.max(220, vw - 52);
+  const maxCols = Math.max(2, Math.floor(usable / minCardWidth));
+  return Math.max(2, Math.min(targetCols, maxCols));
+}
+
 window.initMemoryPage = async function initMemoryPage() {
   const meRes = await apiJson("/api/me");
   if (!meRes.data?.user) {
@@ -127,7 +138,8 @@ window.initMemoryPage = async function initMemoryPage() {
     board.innerHTML = "";
 
     if (!state || !Array.isArray(state.cards) || state.cards.length === 0) {
-      board.style.gridTemplateColumns = "repeat(5, minmax(0, 1fr))";
+      const placeholderCols = fitColumnsForViewport(columnsForCount(20));
+      board.style.gridTemplateColumns = `repeat(${placeholderCols}, minmax(0, 1fr))`;
       for (let i = 0; i < 20; i++) {
         const card = document.createElement("button");
         card.type = "button";
@@ -139,7 +151,7 @@ window.initMemoryPage = async function initMemoryPage() {
       return;
     }
 
-    const cols = columnsForCount(state.cardCount || state.cards.length);
+    const cols = fitColumnsForViewport(columnsForCount(state.cardCount || state.cards.length));
     board.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
 
     const canPick = state.status === "playing" && state.turnUserId === me.userId && !state.resolving;
@@ -218,6 +230,14 @@ window.initMemoryPage = async function initMemoryPage() {
     renderTurn(null);
     renderBoard(null);
   }
+
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      renderBoard(roomState);
+    }, 120);
+  });
 
   async function joinRoom(code) {
     const r = await apiJson(`/api/memory/rooms/${encodeURIComponent(code)}/join`, { method: "POST" });

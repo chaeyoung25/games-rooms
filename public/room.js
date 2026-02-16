@@ -241,7 +241,8 @@ window.initRoomPage = async function initRoomPage() {
     $("status").textContent = statusLabel(room.status);
     $("size").textContent = `${room.size}x${room.size}`;
     $("targetLines").textContent = String(room.targetLines || 5);
-    $("turnLimit").textContent = String(room.drawTimeoutSeconds || 10);
+    const hasBotPlayer = Array.isArray(room.players) && room.players.some((p) => p.isBot);
+    $("turnLimit").textContent = hasBotPlayer ? String(room.drawTimeoutSeconds || 10) : "-";
     $("drawTimeout").value = String(room.drawTimeoutSeconds || 10);
     $("lastNumber").textContent = room.lastNumber == null ? "-" : String(room.lastNumber);
     if (room.lastNumber != null && room.lastNumber !== prevLastNumber) {

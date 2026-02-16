@@ -760,7 +760,12 @@ function scheduleTurn(room) {
   if (room.status !== "playing") return;
   if (!room.turnUserId) return;
   const isBotTurn = room.turnUserId === BINGO_BOT_USER_ID;
-  const turnMs = isBotTurn ? 1200 : Math.max(1000, Number(room.drawTimeoutSeconds || 10) * 1000);
+  // Human players must pick manually on their own turn.
+  if (!isBotTurn) {
+    room.turnEndsAt = null;
+    return;
+  }
+  const turnMs = 1200;
   room.turnEndsAt = Date.now() + turnMs;
   room.turnTimer = setTimeout(() => {
     if (room.status !== "playing") return;
@@ -770,7 +775,7 @@ function scheduleTurn(room) {
     if (selectedNumber == null) return;
     drawNextNumber(room, {
       actorUserId,
-      reason: actorUserId === BINGO_BOT_USER_ID ? "bot_pick" : "timeout_auto_pick",
+      reason: "bot_pick",
       selectedNumber,
     });
   }, turnMs);
