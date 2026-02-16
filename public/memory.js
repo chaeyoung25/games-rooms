@@ -26,15 +26,48 @@ function columnsForCount(cardCount) {
   return 10;
 }
 
-function fitColumnsForViewport(targetCols) {
+function computeBoardLayout(cardCount) {
   const vw = Math.max(320, window.innerWidth || document.documentElement.clientWidth || 0);
-  let minCardWidth = 128;
-  if (vw <= 420) minCardWidth = 88;
-  else if (vw <= 640) minCardWidth = 96;
-  else if (vw <= 920) minCardWidth = 108;
-  const usable = Math.max(220, vw - 52);
-  const maxCols = Math.max(2, Math.floor(usable / minCardWidth));
-  return Math.max(2, Math.min(targetCols, maxCols));
+  const vh = Math.max(420, window.innerHeight || document.documentElement.clientHeight || 0);
+  const landscape = vw > vh;
+  const preferredCols = columnsForCount(cardCount);
+  const gap = vw <= 680 ? 4 : 6;
+
+  const reservedHeight = landscape ? 252 : 316;
+  const availableWidth = Math.max(240, vw - 34);
+  const availableHeight = Math.max(220, vh - reservedHeight);
+  const minCardWidth = landscape ? 48 : 54;
+  const maxCols = Math.max(2, Math.floor(availableWidth / minCardWidth));
+  const minCols = cardCount >= 50 ? 8 : cardCount >= 40 ? 7 : 5;
+
+  let best = null;
+  for (let cols = Math.max(minCols, preferredCols); cols <= Math.min(cardCount, maxCols); cols++) {
+    const rows = Math.ceil(cardCount / cols);
+    const cardWidth = (availableWidth - gap * (cols - 1)) / cols;
+    const cardHeight = cardWidth * 0.8;
+    const neededHeight = rows * cardHeight + gap * (rows - 1);
+    if (neededHeight <= availableHeight + 2) {
+      const area = cardWidth * cardHeight;
+      if (!best || area > best.area) {
+        best = { cols, rows, area };
+      }
+    }
+  }
+
+  const fallbackCols = Math.min(
+    cardCount,
+    Math.max(2, Math.min(maxCols, Math.max(minCols, preferredCols)))
+  );
+  const chosen = best || { cols: fallbackCols, rows: Math.ceil(cardCount / fallbackCols), area: 0 };
+  const boardHeight = Math.max(200, Math.min(availableHeight, vh - (landscape ? 214 : 264)));
+
+  return {
+    cols: chosen.cols,
+    rows: chosen.rows,
+    boardHeight,
+    gap,
+    compact: cardCount >= 40 || landscape,
+  };
 }
 
 window.initMemoryPage = async function initMemoryPage() {
@@ -138,8 +171,11 @@ window.initMemoryPage = async function initMemoryPage() {
     board.innerHTML = "";
 
     if (!state || !Array.isArray(state.cards) || state.cards.length === 0) {
-      const placeholderCols = fitColumnsForViewport(columnsForCount(20));
-      board.style.gridTemplateColumns = `repeat(${placeholderCols}, minmax(0, 1fr))`;
+      const layout = computeBoardLayout(20);
+      board.classList.toggle("compact", layout.compact);
+      board.style.gridTemplateColumns = `repeat(${layout.cols}, minmax(0, 1fr))`;
+      board.style.gap = `${layout.gap}px`;
+      board.style.height = `${layout.boardHeight}px`;
       for (let i = 0; i < 20; i++) {
         const card = document.createElement("button");
         card.type = "button";
@@ -151,8 +187,12 @@ window.initMemoryPage = async function initMemoryPage() {
       return;
     }
 
-    const cols = fitColumnsForViewport(columnsForCount(state.cardCount || state.cards.length));
-    board.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+    const cardCount = state.cardCount || state.cards.length;
+    const layout = computeBoardLayout(cardCount);
+    board.classList.toggle("compact", layout.compact);
+    board.style.gridTemplateColumns = `repeat(${layout.cols}, minmax(0, 1fr))`;
+    board.style.gap = `${layout.gap}px`;
+    board.style.height = `${layout.boardHeight}px`;
 
     const canPick = state.status === "playing" && state.turnUserId === me.userId && !state.resolving;
 

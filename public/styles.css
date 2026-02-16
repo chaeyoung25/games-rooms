@@ -1762,3 +1762,251 @@ body.celebrate .banner.good {
     min-height: 24px;
   }
 }
+
+/* Shared BGM */
+.bgm-toggle {
+  position: fixed;
+  right: 12px;
+  bottom: 12px;
+  z-index: 80;
+  min-width: 96px;
+  height: 42px;
+  border-radius: 999px;
+  border: 2px solid #d7b994;
+  background: linear-gradient(180deg, #fff9ef, #f1dcc1);
+  color: #6b513a;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 5px 0 #c59f76, 0 8px 12px rgba(57, 38, 21, 0.25);
+}
+
+.bgm-toggle.on {
+  border-color: #8fd7b2;
+  background: linear-gradient(180deg, #effff8, #cceede);
+  color: #25634a;
+  box-shadow: 0 5px 0 #7bb896, 0 8px 12px rgba(26, 72, 52, 0.24);
+}
+
+/* Memory Fit */
+.page-memory #memoryBoard {
+  width: 100%;
+  max-width: 100%;
+}
+
+.page-memory #memoryBoard.compact {
+  grid-auto-rows: minmax(0, 1fr);
+  align-content: stretch;
+}
+
+.page-memory #memoryBoard.compact .memory-card {
+  aspect-ratio: auto;
+  min-height: 0;
+  height: 100%;
+  padding: 3px;
+  border-radius: 10px;
+}
+
+.page-memory #memoryBoard.compact .memory-front {
+  border-radius: 7px;
+  gap: 1px;
+  padding: 3px 2px;
+}
+
+.page-memory #memoryBoard.compact .memory-flag {
+  font-size: clamp(14px, 3.4vh, 30px);
+}
+
+.page-memory #memoryBoard.compact .memory-country {
+  font-size: clamp(8px, 1.6vh, 13px);
+  line-height: 1.05;
+}
+
+@media (max-width: 980px) and (orientation: landscape) {
+  .page-memory .pet,
+  .page-memory .emoji-cloud {
+    display: none;
+  }
+
+  .page-memory .wrap {
+    width: calc(100% - 10px);
+    margin-top: 6px;
+  }
+
+  .page-memory .topbar {
+    margin-bottom: 6px;
+  }
+
+  .page-memory .brand-text h1 {
+    font-size: clamp(24px, 4.4vw, 32px);
+  }
+
+  .page-memory .brand .tag {
+    font-size: 12px;
+  }
+
+  .page-memory .room-main {
+    margin-bottom: 8px;
+  }
+
+  .page-memory .card .inner {
+    padding: 10px;
+  }
+
+  .page-memory .room-layout {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .page-memory .room-side {
+    display: none;
+  }
+
+  .page-memory .row {
+    gap: 6px;
+  }
+
+  .page-memory input,
+  .page-memory select,
+  .page-memory button {
+    height: 38px;
+    font-size: 14px;
+  }
+
+  .page-memory #memoryBoard {
+    height: calc(100vh - 208px) !important;
+  }
+
+  .page-memory #memoryBoard.compact .memory-flag {
+    font-size: clamp(13px, 4.1vh, 24px);
+  }
+
+  .page-memory #memoryBoard.compact .memory-country {
+    font-size: clamp(7px, 1.65vh, 11px);
+  }
+}
+
+/* Gomoku */
+.gomoku-toolbar {
+  align-items: center;
+}
+
+#gomokuMode {
+  width: 136px;
+  min-width: 136px;
+  height: 42px;
+}
+
+#gomokuCode {
+  max-width: 260px;
+}
+
+.gomoku-board {
+  --size: 15;
+  margin-top: 12px;
+  width: min(92vw, 760px);
+  max-width: 100%;
+  aspect-ratio: 1;
+  padding: clamp(6px, 1vw, 10px);
+  border-radius: 14px;
+  border: 2px solid #d2b187;
+  background: linear-gradient(180deg, #f3d8ae, #d9b279);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.4), 0 10px 16px rgba(70, 44, 20, 0.2);
+  display: grid;
+  grid-template-columns: repeat(var(--size), minmax(0, 1fr));
+  gap: 2px;
+}
+
+.gomoku-cell {
+  border: none;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.16);
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.gomoku-cell::before,
+.gomoku-cell::after {
+  content: "";
+  position: absolute;
+  background: rgba(104, 71, 37, 0.5);
+}
+
+.gomoku-cell::before {
+  width: 1px;
+  height: 80%;
+}
+
+.gomoku-cell::after {
+  width: 80%;
+  height: 1px;
+}
+
+.gomoku-cell:disabled {
+  cursor: default;
+}
+
+.gomoku-cell:not(:disabled) {
+  cursor: pointer;
+}
+
+.gomoku-cell:not(:disabled):hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+.gomoku-stone {
+  width: 72%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  z-index: 2;
+}
+
+.gomoku-stone.black {
+  background: radial-gradient(circle at 30% 30%, #5f5f5f, #1b1b1b 66%);
+  box-shadow: inset -2px -2px 4px rgba(255, 255, 255, 0.12), 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.gomoku-stone.white {
+  background: radial-gradient(circle at 28% 28%, #ffffff, #e7e7e7 64%, #cccccc);
+  box-shadow: inset -2px -2px 4px rgba(255, 255, 255, 0.9), 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.gomoku-cell.last .gomoku-stone {
+  outline: 2px solid #ff5f7d;
+  outline-offset: 1px;
+}
+
+@media (max-width: 920px) {
+  .page-gomoku .room-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .page-gomoku .side-card {
+    position: static;
+  }
+
+  .page-gomoku #gomokuCode {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 680px) {
+  .gomoku-toolbar .pill,
+  .gomoku-toolbar button {
+    flex: 1 1 calc(50% - 8px);
+    justify-content: center;
+  }
+
+  #gomokuMode {
+    flex: 1 1 120px;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .gomoku-board {
+    width: min(97vw, 640px);
+    gap: 1px;
+    padding: 6px;
+  }
+}

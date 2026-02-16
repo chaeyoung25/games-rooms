@@ -6,7 +6,7 @@
     <title>Games Room - Memory</title>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
-  <body class="page-lobby">
+  <body class="page-lobby page-memory">
     <div class="bg" aria-hidden="true"></div>
     <div class="pet pet-left" aria-hidden="true"></div>
     <div class="pet pet-left2" aria-hidden="true"></div>
@@ -79,8 +79,10 @@
       </div>
     </div>
 
+    <script src="/static/bgm.js"></script>
     <script src="/static/memory.js"></script>
     <script>
+      initArcadeBgm();
       initMemoryPage();
     </script>
   </body>

@@ -68,13 +68,22 @@
               <p>턴제로 카드 2장을 골라 같은 국기 짝을 맞추세요</p>
             </div>
           </article>
+          <article class="show-card variant-panda game-card" data-game="gomoku">
+            <div class="show-thumb" aria-hidden="true"></div>
+            <div class="show-body">
+              <h3>오목</h3>
+              <p>컴퓨터 대전 또는 1:1 온라인 대결</p>
+            </div>
+          </article>
         </div>
         <div id="msg" class="status-msg"></div>
       </section>
     </div>
 
+    <script src="/static/bgm.js"></script>
     <script src="/static/lobby.js"></script>
     <script>
+      initArcadeBgm();
       initLobbyPage();
     </script>
   </body>

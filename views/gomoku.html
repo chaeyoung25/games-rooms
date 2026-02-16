@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Games Room - Croc</title>
+    <title>Games Room - Gomoku</title>
     <link rel="stylesheet" href="/static/styles.css" />
   </head>
-  <body class="page-lobby">
+  <body class="page-lobby page-gomoku">
     <div class="bg" aria-hidden="true"></div>
     <div class="pet pet-left" aria-hidden="true"></div>
     <div class="pet pet-left2" aria-hidden="true"></div>
@@ -19,13 +19,14 @@
       <span class="emo emo-switch"></span>
       <span class="emo emo-arcade"></span>
     </div>
+
     <div class="wrap">
       <div class="topbar">
         <div class="brand">
           <div class="mascot" aria-hidden="true"></div>
           <div class="brand-text">
             <h1><span class="spark" aria-hidden="true">ARCADE</span> GAMES ROOM</h1>
-            <div class="tag">악어이빨 누르기: 함정 이빨을 피하세요</div>
+            <div class="tag">오목: 컴퓨터 대전 또는 1:1 온라인 대결</div>
           </div>
         </div>
         <div class="row">
@@ -37,20 +38,26 @@
 
       <div class="card room-main">
         <div class="inner">
-          <div class="row">
-            <button id="createCroc" class="primary">악어방 만들기</button>
-            <input id="crocCode" placeholder="방 코드 입력 (예: A7K9Q2)" />
-            <button id="joinCroc" class="good">참가</button>
-            <button id="leaveCroc" class="ghost">나가기</button>
-            <label for="toothCount" class="muted">위/아래 이빨 수</label>
-            <select id="toothCount">
-              <option value="10">10 + 10</option>
-              <option value="15">15 + 15</option>
-              <option value="20" selected>20 + 20 (총 40)</option>
+          <div class="row section-row gomoku-toolbar">
+            <label for="gomokuMode" class="muted">모드</label>
+            <select id="gomokuMode" aria-label="gomoku mode">
+              <option value="bot" selected>컴퓨터 대전</option>
+              <option value="pvp">1:1 온라인</option>
             </select>
-            <button id="startCroc" class="primary" style="display: none">게임 시작</button>
+            <button id="newBotGame" class="primary">새 게임</button>
+            <button id="startGomoku" class="primary" style="display: none">대국 시작</button>
+            <span class="pill">내 돌 <b id="gomokuMyStone">흑(B)</b></span>
+            <span class="pill">상태 <b id="gomokuStatus">대기</b></span>
           </div>
-          <div id="crocMsg" class="status-msg"></div>
+
+          <div id="gomokuPvpControls" class="row section-row" style="display: none">
+            <button id="createGomoku" class="primary">오목방 만들기</button>
+            <input id="gomokuCode" placeholder="방 코드 입력 (예: A7K9Q2)" />
+            <button id="joinGomoku" class="good">참가</button>
+            <button id="leaveGomoku" class="ghost">나가기</button>
+          </div>
+
+          <div id="gomokuMsg" class="status-msg"></div>
         </div>
       </div>
 
@@ -58,25 +65,18 @@
         <section class="room-stage">
           <div class="card">
             <div class="inner">
-              <div id="crocTurn" class="banner">방을 만들거나 참가하세요.</div>
-              <div id="crocMouth" class="croc-mouth">
-                <div id="teeth-container">
-                  <div id="teethTop" class="teeth-row top"></div>
-                  <div id="teethBottom" class="teeth-row bottom"></div>
-                </div>
-              </div>
-              <div class="croc-hint">
-                <span id="toothSummary">40개 이빨 중 1개는 함정</span>
-              </div>
+              <div id="gomokuTurn" class="banner">컴퓨터 대전 모드: 흑돌부터 시작합니다.</div>
+              <div id="gomokuBoard" class="gomoku-board" aria-label="gomoku board"></div>
             </div>
           </div>
         </section>
+
         <aside class="room-side">
           <div class="card side-card">
             <div class="inner">
-              <h2>참가자</h2>
-              <div class="muted">순서대로 이빨 선택</div>
-              <div id="crocPlayers" class="players"></div>
+              <h2>플레이어</h2>
+              <div class="muted">온라인 모드에서 2인까지 참가</div>
+              <div id="gomokuPlayers" class="players"></div>
             </div>
           </div>
         </aside>
@@ -84,10 +84,10 @@
     </div>
 
     <script src="/static/bgm.js"></script>
-    <script src="/static/croc.js"></script>
+    <script src="/static/gomoku.js"></script>
     <script>
       initArcadeBgm();
-      initCrocPage();
+      initGomokuPage();
     </script>
   </body>
 </html>

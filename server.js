@@ -339,8 +339,10 @@ function countCompleteLines(board, calledSet) {
 const rooms = new Map(); // code -> room
 const crocRooms = new Map(); // code -> crocRoom
 const memoryRooms = new Map(); // code -> memoryRoom
+const gomokuRooms = new Map(); // code -> gomokuRoom
 const BINGO_BOT_USER_ID = "__bingo_bot__";
 const BINGO_BOT_USERNAME = "COM";
+const GOMOKU_SIZE = 15;
 
 const MEMORY_CARD_COUNTS = new Set([20, 30, 40, 50, 60]);
 
@@ -474,6 +476,31 @@ function memoryRoomPublicState(room) {
   };
 }
 
+function gomokuRoomPublicState(room) {
+  return {
+    code: room.code,
+    status: room.status,
+    hostUserId: room.hostUserId,
+    createdAt: room.createdAt,
+    boardSize: room.boardSize,
+    board: room.board,
+    turnUserId: room.turnUserId ?? null,
+    winnerUserId: room.winnerUserId ?? null,
+    winnerUsername: room.winnerUsername ?? null,
+    winnerStone: room.winnerStone ?? null,
+    draw: Boolean(room.draw),
+    lastMoveIndex: room.lastMoveIndex ?? null,
+    lastMoveByUserId: room.lastMoveByUserId ?? null,
+    players: Array.from(room.players.values()).map((p) => ({
+      userId: p.userId,
+      username: p.username,
+      online: Boolean(p.online),
+      joinedAt: p.joinedAt,
+      stone: p.stone || null,
+    })),
+  };
+}
+
 function sseWrite(res, event, data) {
   res.write(`event: ${event}\n`);
   res.write(`data: ${JSON.stringify(data)}\n\n`);
@@ -500,6 +527,16 @@ function broadcastCrocRoom(room, event, data) {
 }
 
 function broadcastMemoryRoom(room, event, data) {
+  for (const sub of room.subscribers) {
+    try {
+      sseWrite(sub.res, event, data);
+    } catch {
+      // ignore broken pipes
+    }
+  }
+}
+
+function broadcastGomokuRoom(room, event, data) {
   for (const sub of room.subscribers) {
     try {
       sseWrite(sub.res, event, data);
@@ -545,6 +582,16 @@ function pruneMemoryRoomIfEmpty(room) {
   memoryRooms.delete(room.code);
 }
 
+function pruneGomokuRoomIfEmpty(room) {
+  if (room.players.size > 0) return;
+  try {
+    for (const sub of room.subscribers) sub.res.end();
+  } catch {
+    // ignore
+  }
+  gomokuRooms.delete(room.code);
+}
+
 function crocSetTurnByCursor(room) {
   if (room.turnOrder.length === 0) {
     room.turnUserId = null;
@@ -561,6 +608,42 @@ function memorySetTurnByCursor(room) {
   }
   room.turnCursor = ((room.turnCursor % room.turnOrder.length) + room.turnOrder.length) % room.turnOrder.length;
   room.turnUserId = room.turnOrder[room.turnCursor];
+}
+
+function gomokuSetTurnByCursor(room) {
+  if (room.turnOrder.length === 0) {
+    room.turnUserId = null;
+    return;
+  }
+  room.turnCursor = ((room.turnCursor % room.turnOrder.length) + room.turnOrder.length) % room.turnOrder.length;
+  room.turnUserId = room.turnOrder[room.turnCursor];
+}
+
+function gomokuHasFive(board, boardSize, index, stone) {
+  const row = Math.floor(index / boardSize);
+  const col = index % boardSize;
+  const directions = [
+    [1, 0],
+    [0, 1],
+    [1, 1],
+    [1, -1],
+  ];
+  for (const [dr, dc] of directions) {
+    let count = 1;
+    for (let dir = -1; dir <= 1; dir += 2) {
+      let r = row + dr * dir;
+      let c = col + dc * dir;
+      while (r >= 0 && r < boardSize && c >= 0 && c < boardSize) {
+        const i = r * boardSize + c;
+        if (board[i] !== stone) break;
+        count += 1;
+        r += dr * dir;
+        c += dc * dir;
+      }
+    }
+    if (count >= 5) return true;
+  }
+  return false;
 }
 
 function buildMemoryDeck(cardCount) {
@@ -908,6 +991,11 @@ async function main() {
       await sendFile(res, path.join(VIEWS_DIR, "memory.html"));
       return;
     }
+    if (req.method === "GET" && pathname === "/gomoku") {
+      if (!requireAuthPage(req, res)) return;
+      await sendFile(res, path.join(VIEWS_DIR, "gomoku.html"));
+      return;
+    }
     if (req.method === "GET" && pathname.startsWith("/room/")) {
       if (!requireAuthPage(req, res)) return;
       await sendFile(res, path.join(VIEWS_DIR, "room.html"));
@@ -1079,6 +1167,61 @@ async function main() {
           const p = room.players.get(session.userId);
           if (p) p.online = false;
           broadcastMemoryRoom(room, "state", memoryRoomPublicState(room));
+        }
+      });
+      return;
+    }
+
+    if (req.method === "GET" && pathname.startsWith("/sse/gomoku/")) {
+      const session = requireAuthApi(req, res);
+      if (!session) return;
+      const code = pathname.slice("/sse/gomoku/".length).toUpperCase();
+      const room = gomokuRooms.get(code);
+      if (!room) {
+        sendJson(res, 404, { ok: false, error: "room_not_found" });
+        return;
+      }
+      const player = room.players.get(session.userId);
+      if (!player) {
+        sendJson(res, 403, { ok: false, error: "not_in_room" });
+        return;
+      }
+
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream; charset=utf-8",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+      });
+      res.write(`: connected ${nowIso()}\n\n`);
+
+      const sub = { res, userId: session.userId };
+      room.subscribers.add(sub);
+      room.connections.set(session.userId, (room.connections.get(session.userId) || 0) + 1);
+      player.online = true;
+
+      sseWrite(res, "state", gomokuRoomPublicState(room));
+      broadcastGomokuRoom(room, "state", gomokuRoomPublicState(room));
+
+      const heartbeat = setInterval(() => {
+        try {
+          res.write(`: heartbeat ${nowIso()}\n\n`);
+        } catch {
+          // ignore
+        }
+      }, 25000);
+
+      req.on("close", () => {
+        clearInterval(heartbeat);
+        room.subscribers.delete(sub);
+        const prev = room.connections.get(session.userId) || 0;
+        const next = Math.max(0, prev - 1);
+        if (next === 0) room.connections.delete(session.userId);
+        else room.connections.set(session.userId, next);
+
+        if (!room.connections.has(session.userId)) {
+          const p = room.players.get(session.userId);
+          if (p) p.online = false;
+          broadcastGomokuRoom(room, "state", gomokuRoomPublicState(room));
         }
       });
       return;
@@ -1607,6 +1750,246 @@ async function main() {
         memoryResolveMismatchLater(room);
         broadcastMemoryRoom(room, "state", memoryRoomPublicState(room));
         sendJson(res, 200, { ok: true, matched: false });
+        return;
+      }
+
+      if (req.method === "POST" && pathname === "/api/gomoku/rooms") {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+
+        let code = pickRoomCode();
+        for (let i = 0; i < 10 && gomokuRooms.has(code); i++) code = pickRoomCode();
+        if (gomokuRooms.has(code)) {
+          sendJson(res, 500, { ok: false, error: "room_code_collision" });
+          return;
+        }
+
+        const room = {
+          code,
+          status: "lobby",
+          hostUserId: session.userId,
+          createdAt: nowIso(),
+          boardSize: GOMOKU_SIZE,
+          board: Array.from({ length: GOMOKU_SIZE * GOMOKU_SIZE }, () => null),
+          turnOrder: [],
+          turnCursor: 0,
+          turnUserId: null,
+          winnerUserId: null,
+          winnerUsername: null,
+          winnerStone: null,
+          draw: false,
+          lastMoveIndex: null,
+          lastMoveByUserId: null,
+          players: new Map(),
+          subscribers: new Set(),
+          connections: new Map(),
+        };
+        room.players.set(session.userId, {
+          userId: session.userId,
+          username: session.username,
+          joinedAt: nowIso(),
+          online: true,
+          stone: "B",
+        });
+        gomokuRooms.set(code, room);
+        sendJson(res, 200, { ok: true, code });
+        return;
+      }
+
+      if (req.method === "POST" && pathname.startsWith("/api/gomoku/rooms/") && pathname.endsWith("/join")) {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+        const code = pathname.slice("/api/gomoku/rooms/".length, -"/join".length).toUpperCase();
+        const room = gomokuRooms.get(code);
+        if (!room) {
+          sendJson(res, 404, { ok: false, error: "room_not_found" });
+          return;
+        }
+
+        const existing = room.players.get(session.userId);
+        if (!existing) {
+          if (room.status !== "lobby") {
+            sendJson(res, 409, { ok: false, error: "room_not_joinable" });
+            return;
+          }
+          if (room.players.size >= 2) {
+            sendJson(res, 409, { ok: false, error: "room_full" });
+            return;
+          }
+          const usedStones = new Set(
+            Array.from(room.players.values())
+              .map((p) => p.stone)
+              .filter(Boolean)
+          );
+          room.players.set(session.userId, {
+            userId: session.userId,
+            username: session.username,
+            joinedAt: nowIso(),
+            online: true,
+            stone: usedStones.has("B") ? "W" : "B",
+          });
+        } else {
+          existing.online = true;
+        }
+        broadcastGomokuRoom(room, "state", gomokuRoomPublicState(room));
+        sendJson(res, 200, { ok: true, room: gomokuRoomPublicState(room) });
+        return;
+      }
+
+      if (req.method === "POST" && pathname.startsWith("/api/gomoku/rooms/") && pathname.endsWith("/leave")) {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+        const code = pathname.slice("/api/gomoku/rooms/".length, -"/leave".length).toUpperCase();
+        const room = gomokuRooms.get(code);
+        if (!room) {
+          sendJson(res, 404, { ok: false, error: "room_not_found" });
+          return;
+        }
+        const leavingWasTurn = room.turnUserId === session.userId;
+        room.players.delete(session.userId);
+        room.connections.delete(session.userId);
+        room.turnOrder = room.turnOrder.filter((id) => id !== session.userId);
+
+        if (room.hostUserId === session.userId) {
+          const nextHost = room.players.values().next().value;
+          room.hostUserId = nextHost ? nextHost.userId : null;
+        }
+
+        if (room.status === "playing") {
+          if (room.players.size < 2) {
+            const remain = room.players.values().next().value;
+            room.status = "ended";
+            room.turnUserId = null;
+            room.draw = false;
+            room.winnerUserId = remain ? remain.userId : null;
+            room.winnerUsername = remain ? remain.username : null;
+            room.winnerStone = remain ? remain.stone || null : null;
+          } else if (leavingWasTurn || !room.turnOrder.includes(room.turnUserId)) {
+            if (room.turnCursor >= room.turnOrder.length) room.turnCursor = 0;
+            gomokuSetTurnByCursor(room);
+          } else {
+            room.turnCursor = Math.max(0, room.turnOrder.indexOf(room.turnUserId));
+          }
+        }
+
+        broadcastGomokuRoom(room, "state", gomokuRoomPublicState(room));
+        pruneGomokuRoomIfEmpty(room);
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      if (req.method === "POST" && pathname.startsWith("/api/gomoku/rooms/") && pathname.endsWith("/start")) {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+        const code = pathname.slice("/api/gomoku/rooms/".length, -"/start".length).toUpperCase();
+        const room = gomokuRooms.get(code);
+        if (!room) {
+          sendJson(res, 404, { ok: false, error: "room_not_found" });
+          return;
+        }
+        if (room.hostUserId !== session.userId) {
+          sendJson(res, 403, { ok: false, error: "host_only" });
+          return;
+        }
+        if (room.players.size !== 2) {
+          sendJson(res, 409, { ok: false, error: "need_two_players" });
+          return;
+        }
+
+        room.status = "playing";
+        room.board = Array.from({ length: room.boardSize * room.boardSize }, () => null);
+        room.turnOrder = Array.from(room.players.keys()).slice(0, 2);
+        room.turnCursor = 0;
+        gomokuSetTurnByCursor(room);
+        room.winnerUserId = null;
+        room.winnerUsername = null;
+        room.winnerStone = null;
+        room.draw = false;
+        room.lastMoveIndex = null;
+        room.lastMoveByUserId = null;
+
+        for (let i = 0; i < room.turnOrder.length; i++) {
+          const id = room.turnOrder[i];
+          const p = room.players.get(id);
+          if (p) p.stone = i === 0 ? "B" : "W";
+        }
+
+        broadcastGomokuRoom(room, "state", gomokuRoomPublicState(room));
+        sendJson(res, 200, { ok: true });
+        return;
+      }
+
+      if (req.method === "POST" && pathname.startsWith("/api/gomoku/rooms/") && pathname.endsWith("/move")) {
+        const session = requireAuthApi(req, res);
+        if (!session) return;
+        const code = pathname.slice("/api/gomoku/rooms/".length, -"/move".length).toUpperCase();
+        const room = gomokuRooms.get(code);
+        if (!room) {
+          sendJson(res, 404, { ok: false, error: "room_not_found" });
+          return;
+        }
+        if (room.status !== "playing") {
+          sendJson(res, 409, { ok: false, error: "not_playing" });
+          return;
+        }
+        if (room.turnUserId !== session.userId) {
+          sendJson(res, 403, { ok: false, error: "not_your_turn" });
+          return;
+        }
+        const player = room.players.get(session.userId);
+        if (!player || !player.stone) {
+          sendJson(res, 403, { ok: false, error: "player_not_ready" });
+          return;
+        }
+        const body = await readJsonBody(req);
+        if (!body.ok) {
+          sendJson(res, 400, { ok: false, error: body.error });
+          return;
+        }
+        const index = Number(body.value.index);
+        const maxIndex = room.boardSize * room.boardSize - 1;
+        if (!Number.isInteger(index) || index < 0 || index > maxIndex) {
+          sendJson(res, 400, { ok: false, error: "invalid_index" });
+          return;
+        }
+        if (room.board[index]) {
+          sendJson(res, 409, { ok: false, error: "occupied" });
+          return;
+        }
+
+        room.board[index] = player.stone;
+        room.lastMoveIndex = index;
+        room.lastMoveByUserId = session.userId;
+
+        if (gomokuHasFive(room.board, room.boardSize, index, player.stone)) {
+          room.status = "ended";
+          room.turnUserId = null;
+          room.draw = false;
+          room.winnerUserId = player.userId;
+          room.winnerUsername = player.username;
+          room.winnerStone = player.stone;
+          broadcastGomokuRoom(room, "state", gomokuRoomPublicState(room));
+          sendJson(res, 200, { ok: true, ended: true });
+          return;
+        }
+
+        const boardFull = room.board.every((v) => Boolean(v));
+        if (boardFull) {
+          room.status = "ended";
+          room.turnUserId = null;
+          room.draw = true;
+          room.winnerUserId = null;
+          room.winnerUsername = null;
+          room.winnerStone = null;
+          broadcastGomokuRoom(room, "state", gomokuRoomPublicState(room));
+          sendJson(res, 200, { ok: true, ended: true, draw: true });
+          return;
+        }
+
+        room.turnCursor = (room.turnCursor + 1) % room.turnOrder.length;
+        gomokuSetTurnByCursor(room);
+        broadcastGomokuRoom(room, "state", gomokuRoomPublicState(room));
+        sendJson(res, 200, { ok: true });
         return;
       }
 
