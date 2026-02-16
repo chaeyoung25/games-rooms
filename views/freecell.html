@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Games Room - FreeCell</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body class="page-lobby page-freecell">
+    <div class="bg" aria-hidden="true"></div>
+    <div class="pet pet-left" aria-hidden="true"></div>
+    <div class="pet pet-left2" aria-hidden="true"></div>
+    <div class="pet pet-center" aria-hidden="true"></div>
+    <div class="pet pet-right" aria-hidden="true"></div>
+    <div class="pet pet-right2" aria-hidden="true"></div>
+    <div class="emoji-cloud" aria-hidden="true">
+      <span class="emo emo-tv"></span>
+      <span class="emo emo-pad"></span>
+      <span class="emo emo-switch"></span>
+      <span class="emo emo-arcade"></span>
+    </div>
+
+    <div class="wrap">
+      <div class="topbar">
+        <div class="brand">
+          <div class="mascot" aria-hidden="true"></div>
+          <div class="brand-text">
+            <h1><span class="spark" aria-hidden="true">ARCADE</span> GAMES ROOM</h1>
+            <div class="tag">프리셀: 모든 카드를 무늬별 A부터 K까지 완성하세요</div>
+          </div>
+        </div>
+        <div class="row">
+          <a class="pill" href="/lobby">게임 목록</a>
+          <span class="pill">접속: <b id="me"></b></span>
+          <button id="logout" class="ghost">로그아웃</button>
+        </div>
+      </div>
+
+      <div class="card room-main">
+        <div class="inner">
+          <div class="row section-row freecell-toolbar">
+            <button id="newFreecell" class="primary">새 게임</button>
+            <button id="autoFoundation" class="good">자동 올리기</button>
+            <span class="pill">이동수 <b id="freecellMoves">0</b></span>
+            <span class="pill">진행률 <b id="freecellProgress">0/52</b></span>
+          </div>
+          <div id="freecellMsg" class="status-msg"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="inner freecell-stage">
+          <div class="freecell-top" id="freecellTop"></div>
+          <div class="freecell-cascades" id="freecellCascades"></div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/static/bgm.js"></script>
+    <script src="/static/freecell.js"></script>
+    <script>
+      initArcadeBgm();
+      initFreecellPage();
+    </script>
+  </body>
+</html>

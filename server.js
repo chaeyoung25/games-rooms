@@ -996,6 +996,11 @@ async function main() {
       await sendFile(res, path.join(VIEWS_DIR, "gomoku.html"));
       return;
     }
+    if (req.method === "GET" && pathname === "/freecell") {
+      if (!requireAuthPage(req, res)) return;
+      await sendFile(res, path.join(VIEWS_DIR, "freecell.html"));
+      return;
+    }
     if (req.method === "GET" && pathname.startsWith("/room/")) {
       if (!requireAuthPage(req, res)) return;
       await sendFile(res, path.join(VIEWS_DIR, "room.html"));
