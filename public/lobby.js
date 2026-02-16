@@ -50,6 +50,9 @@ window.initLobbyPage = async function initLobbyPage() {
       } else if (game === "gomoku") {
         setMsg("오목으로 이동합니다.", "ok");
         setTimeout(() => (location.href = "/gomoku"), 120);
+      } else if (game === "savepets") {
+        setMsg("Save The Pets로 이동합니다.", "ok");
+        setTimeout(() => (location.href = "/save-pets"), 120);
       } else {
         setMsg("이 게임은 준비중입니다. 카드 추가 후 라우트만 연결하면 바로 확장됩니다.", "muted");
       }

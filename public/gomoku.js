@@ -13,7 +13,7 @@ function $(id) {
   return document.getElementById(id);
 }
 
-const SIZE = 15;
+const SIZE = 19;
 
 function setMsg(text, kind = "") {
   const el = $("gomokuMsg");

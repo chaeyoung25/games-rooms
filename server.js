@@ -344,7 +344,7 @@ const memoryRooms = new Map(); // code -> memoryRoom
 const gomokuRooms = new Map(); // code -> gomokuRoom
 const BINGO_BOT_USER_ID = "__bingo_bot__";
 const BINGO_BOT_USERNAME = "COM";
-const GOMOKU_SIZE = 15;
+const GOMOKU_SIZE = 19;
 
 const MEMORY_CARD_COUNTS = new Set([20, 30, 40, 50, 60]);
 
@@ -995,6 +995,11 @@ async function main() {
     if (req.method === "GET" && pathname === "/gomoku") {
       if (!requireAuthPage(req, res)) return;
       await sendFile(res, path.join(VIEWS_DIR, "gomoku.html"));
+      return;
+    }
+    if (req.method === "GET" && pathname === "/save-pets") {
+      if (!requireAuthPage(req, res)) return;
+      await sendFile(res, path.join(VIEWS_DIR, "save-pets.html"));
       return;
     }
     if (req.method === "GET" && pathname === "/freecell") {

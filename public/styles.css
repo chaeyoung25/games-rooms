@@ -1901,7 +1901,7 @@ body.celebrate .banner.good {
 }
 
 .gomoku-board {
-  --size: 15;
+  --size: 19;
   margin-top: 12px;
   width: min(92vw, 760px);
   max-width: 100%;
@@ -2183,5 +2183,38 @@ body.celebrate .banner.good {
   .fc-card-holder {
     transform: translateX(-50%) scale(0.9);
     transform-origin: top center;
+  }
+}
+
+/* Save The Pets */
+.page-savepets .room-main {
+  margin-bottom: 10px;
+}
+
+.savepets-toolbar {
+  align-items: center;
+}
+
+.savepets-stage {
+  width: 100%;
+  display: grid;
+  place-items: center;
+}
+
+#savePetsCanvas {
+  width: min(100%, 960px);
+  max-width: 100%;
+  border-radius: 16px;
+  border: 2px solid #dec49c;
+  background: linear-gradient(180deg, #f9f3e8, #f1dfc2);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.6), 0 8px 16px rgba(83, 62, 36, 0.2);
+  touch-action: none;
+}
+
+@media (max-width: 760px) {
+  .savepets-toolbar .pill,
+  .savepets-toolbar button {
+    flex: 1 1 calc(50% - 8px);
+    justify-content: center;
   }
 }
